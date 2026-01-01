@@ -92,7 +92,7 @@ def get_project_stats(
     project_endpoint: str,
     api_key: str,
 ) -> requests.Response:
-    logger.info(f"{locals() = }")
+    logger.info(f"requesting {project = }")
     res = requests.get(
         url=f"{base}{project_endpoint.format(project=project)}",
         headers={"X-API-Key": api_key},
