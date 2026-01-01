@@ -14,3 +14,31 @@ total downloads: `38879`
 | repo-mapper     | 980             |
 | io-adapters     | 279             |
 ::
+
+
+# Repo map
+```
+├── .github
+│   └── workflows
+│       ├── ci_tests.yaml
+│       └── update_table.yaml
+├── .pytest_cache
+│   └── README.md
+├── src
+│   └── pepy_tech_stats
+│       ├── core
+│       │   ├── __init__.py
+│       │   ├── constants.py
+│       │   └── logger.py
+│       ├── __init__.py
+│       └── __main__.py
+├── tests
+│   ├── __init__.py
+│   └── test_main.py
+├── .pre-commit-config.yaml
+├── README.md
+├── pyproject.toml
+├── ruff.toml
+└── uv.lock
+::
+```
