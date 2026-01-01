@@ -15,7 +15,6 @@ from danom import Err, Ok, Stream, safe
 from pepy_tech_stats.core.constants import (
     BASE,
     PROJECT_STATS_ENDPOINT,
-    REPO_ROOT,
     REQUESTS_PER_MIN,
 )
 from pepy_tech_stats.core.logger import logger
@@ -129,7 +128,7 @@ def create_readme_table(project_stats: tuple[dict[str, str], ...]) -> str:
 
 
 @safe
-def update_readme(readme_table: str, readme_path: str = f"{REPO_ROOT}/README.md") -> None:
+def update_readme(readme_table: str, readme_path: str = "./README.md") -> None:
     readme_path = Path(readme_path)
     readme_txt = readme_path.read_text(encoding="utf-8")
     pattern = r"(# python packages)(.*?)(::)"
