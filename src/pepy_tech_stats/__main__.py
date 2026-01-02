@@ -1,7 +1,6 @@
 import argparse
 import itertools
 import re
-import sys
 import time
 from functools import partial
 from itertools import batched
@@ -10,7 +9,7 @@ from pathlib import Path
 import attrs
 import polars as pl
 import requests
-from danom import Err, Ok, Stream, safe
+from danom import Stream, safe
 
 from pepy_tech_stats.core.constants import (
     BASE,
@@ -33,12 +32,8 @@ def main(projects: list[str], api_key: str) -> None:
         .and_then(create_readme_table)
         .and_then(update_readme)
     )
-
-    match res:
-        case Ok(inner):
-            sys.exit(inner)
-        case Err(error):
-            raise error
+    if not res.is_ok():
+        raise res.error
 
 
 @attrs.define(frozen=True)
