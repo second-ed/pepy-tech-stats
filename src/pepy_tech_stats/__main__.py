@@ -1,4 +1,5 @@
 import argparse
+import datetime as dt
 import itertools
 import re
 import time
@@ -101,10 +102,16 @@ def get_project_stats(
 
 @safe
 def create_readme_table(project_stats: tuple[dict[str, str], ...]) -> str:
+    yesterday = str(dt.datetime.now(tz=dt.UTC).date() - dt.timedelta(1))
+
     df = (
         pl.DataFrame(project_stats)
         .rename({"id": "package"})
-        .select(["package", "total_downloads"])
+        .unnest("downloads")
+        .with_columns(
+            [pl.sum_horizontal(pl.col(yesterday).struct.field("*")).alias("yesterday_downloads")]
+        )
+        .select("package", "total_downloads", "yesterday_downloads")
         .sort("total_downloads", descending=True)
     )
 
@@ -115,7 +122,8 @@ def create_readme_table(project_stats: tuple[dict[str, str], ...]) -> str:
     ):
         return "\n".join(
             [
-                f"total downloads: `{df['total_downloads'].sum()}`",
+                f"total downloads: `{df['total_downloads'].sum()}`\n",
+                f"yesterday downloads: `{df['yesterday_downloads'].sum()}`\n",
                 "### breakdown by package",
                 repr(df),
             ]
