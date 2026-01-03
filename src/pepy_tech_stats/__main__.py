@@ -106,6 +106,7 @@ def create_readme_table(project_stats: tuple[dict[str, str], ...]) -> str:
 
     df = (
         pl.DataFrame(project_stats)
+        .lazy()
         .rename({"id": "package"})
         .unnest("downloads")
         .with_columns(
@@ -113,6 +114,7 @@ def create_readme_table(project_stats: tuple[dict[str, str], ...]) -> str:
         )
         .select("package", "total_downloads", "yesterday_downloads")
         .sort("total_downloads", descending=True)
+        .collect()
     )
 
     with pl.Config(
