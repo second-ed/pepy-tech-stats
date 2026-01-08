@@ -1,0 +1,17 @@
+[package]
+name = "pepy-tech-stats"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "pepy_tech_stats"
+crate-type = ["cdylib"]
+
+[dependencies]
+flexi_logger = "0.31.7"
+log = "0.4.29"
+pyo3 = "0.25.0"
+reqwest = "0.13.1"
+test-case = "3.3.1"
+thiserror = "2.0.17"

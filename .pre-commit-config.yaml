@@ -3,25 +3,41 @@ repos:
     rev: 0.5.26
     hooks:
       - id: uv-lock
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-toml
+      - id: check-yaml
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.9.4
+    hooks:
+    - id: ruff
+      args: [ --fix ]
+    - id: ruff-format
   - repo: local
     hooks:
-      - id: ruff
-        name: ruff
-        entry: ruff check
-        language: system
-        types_or: [ python, pyi, jupyter ]
-        args: [ --fix ]
-      - id: ruff
-        name: ruff
-        entry: ruff format
-        language: system
-        types_or: [ python, pyi, jupyter ]
-      - id: pytest
-        name: pytest
-        entry: uv run pytest -vv --cov=src --cov-report term-missing:skip-covered
-        language: python
+      - id: build
+        name: build
+        entry: cargo build --verbose
+        language: rust
         pass_filenames: false
-        always_run: true
+      - id: fmt
+        name: fmt
+        entry: cargo fmt --all -- --check
+        language: rust
+        pass_filenames: false
+      - id: test
+        name: test
+        entry: cargo test
+        language: rust
+        pass_filenames: false
+      - id: clippy
+        name: clippy
+        entry: cargo clippy
+        language: rust
+        pass_filenames: false
       - id: repo-map
         name: repo_map
         entry: uv run -m repo_mapper

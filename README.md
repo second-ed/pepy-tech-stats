@@ -27,7 +27,7 @@ yesterday downloads: `415`
 │       └── update_table.yaml
 ├── .pytest_cache
 │   └── README.md
-├── src
+├── python
 │   └── pepy_tech_stats
 │       ├── core
 │       │   ├── __init__.py
@@ -35,10 +35,9 @@ yesterday downloads: `415`
 │       │   └── logger.py
 │       ├── __init__.py
 │       └── __main__.py
-├── tests
-│   ├── __init__.py
-│   └── test_main.py
 ├── .pre-commit-config.yaml
+├── Cargo.lock
+├── Cargo.toml
 ├── README.md
 ├── pyproject.toml
 ├── ruff.toml
