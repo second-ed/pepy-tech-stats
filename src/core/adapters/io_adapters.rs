@@ -19,6 +19,8 @@ pub enum IoError {
     InvalidFileType(FileType),
     #[error("IoError: {0}")]
     Io(std::io::Error),
+    #[error("Value cannot be converted into FileType")]
+    TypeMismatch,
 }
 
 impl From<std::io::Error> for IoError {
@@ -71,40 +73,26 @@ pub struct FakeAdapter {
     pub files: FakeFileMap,
 }
 
-// pub trait FromIoValue: Sized {
-//     fn from_io_value(value: &IoValue) -> Result<Self, IoError>;
-// }
+impl Adapter for FakeAdapter {
+    fn read(&mut self, path: &Path, file_type: FileType) -> Result<IoValue, IoError> {
+        let res = self
+            .files
+            .get(path)
+            .ok_or_else(|| IoError::NotFound(path.to_path_buf().clone()))?;
 
-// impl FromIoValue for String {
-//     fn from_io_value(value: &IoValue) -> Result<Self, IoError> {
-//         if let IoValue::Str(s) = value {
-//             Ok(s.clone())
-//         } else {
-//             Err(IoError::InvalidFileType())
-//         }
-//     }
-// }
+        let val = match file_type {
+            FileType::Str => IoValue::Str(res.to_string()?),
+        };
+        Ok(val)
+    }
 
-// impl Adapter for FakeAdapter {
-//     fn read<T: FromIoValue>(
-//         &mut self,
-//         path: &Path,
-//         file_type: FileType,
-//     ) -> Result<&IoValue, IoError> {
-//         let res = self
-//             .files
-//             .get(path)
-//             .ok_or_else(|| IoError::NotFound(path.to_path_buf().clone()));
-//         T::from_io_value(res)
-//     }
-//     fn write(map: &mut FakeFileMap, path: PathBuf, value: IoValue) {
-//         map.insert(path, value);
-//     }
-// }
-
-// pub fn as_str(value: &IoValue) -> Result<&str, IoError> {
-//     match value {
-//         IoValue::Str(s) => Ok(s),
-//         _ => Err(IoError::InvalidType { expected: "Str" }),
-//     }
-// }
+    fn write(
+        &mut self,
+        path: &Path,
+        data: IoValue,
+        _file_type: FileType,
+    ) -> std::result::Result<(), IoError> {
+        self.files.insert(path.to_path_buf(), data);
+        Ok(())
+    }
+}

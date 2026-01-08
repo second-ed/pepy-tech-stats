@@ -16,7 +16,14 @@ impl fmt::Display for FileType {
 #[derive(Debug, Clone)]
 pub enum IoValue {
     Str(String),
-    Json,
+}
+impl IoValue {
+    pub fn to_string(&self) -> Result<String, IoError> {
+        match self {
+            IoValue::Str(s) => Ok(s.to_string()),
+            _ => Err(IoError::TypeMismatch),
+        }
+    }
 }
 
 pub type ReadFn = fn(&Path) -> Result<IoValue, IoError>;
