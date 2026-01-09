@@ -26,17 +26,10 @@ impl AdapterBuilder {
     }
 
     pub fn get_real_adapter(self) -> RealAdapter {
-        RealAdapter {
-            read_fns: self.read_fns,
-            write_fns: self.write_fns,
-        }
+        RealAdapter::new(self.read_fns, self.write_fns)
     }
 
     pub fn get_fake_adapter(self, files: FakeFileMap) -> FakeAdapter {
-        FakeAdapter {
-            read_fns: self.read_fns,
-            write_fns: self.write_fns,
-            files,
-        }
+        FakeAdapter::new(self.read_fns, self.write_fns, files)
     }
 }

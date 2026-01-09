@@ -1,4 +1,7 @@
-use crate::core::adapters::io_funcs::{FileType, IoValue, ReadFn, WriteFn};
+use crate::core::adapters::{
+    io_funcs::{FileType, IoValue, ReadFn, WriteFn},
+    io_params::{ParamKey, ParamValue},
+};
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
@@ -19,8 +22,14 @@ pub enum IoError {
     InvalidFileType(FileType),
     #[error("IoError: {0}")]
     Io(std::io::Error),
+    #[error("JsonError: {0}")]
+    Json(serde_json::Error),
     #[error("Value cannot be converted into FileType")]
     TypeMismatch,
+    #[error("reqwest error: {0}")]
+    ReqwestError(#[from] reqwest::Error),
+    #[error("external error: {0}")]
+    External(#[from] Box<dyn std::error::Error>),
 }
 
 impl From<std::io::Error> for IoError {
@@ -37,11 +46,23 @@ pub trait Adapter {
         data: IoValue,
         file_type: FileType,
     ) -> std::result::Result<(), IoError>;
+    fn add_param(&mut self, key: ParamKey, value: ParamValue) -> &mut Self;
 }
 
 pub struct RealAdapter {
     pub read_fns: ReadMap,
     pub write_fns: WriteMap,
+    pub params: HashMap<ParamKey, ParamValue>,
+}
+
+impl RealAdapter {
+    pub fn new(read_fns: ReadMap, write_fns: WriteMap) -> Self {
+        Self {
+            read_fns,
+            write_fns,
+            params: HashMap::new(),
+        }
+    }
 }
 
 impl Adapter for RealAdapter {
@@ -50,7 +71,7 @@ impl Adapter for RealAdapter {
             .read_fns
             .get(&file_type)
             .ok_or(IoError::UnknownFileType(file_type))?;
-        func(path)
+        func(path, &self.params)
     }
 
     fn write(
@@ -63,7 +84,11 @@ impl Adapter for RealAdapter {
             .write_fns
             .get(&file_type)
             .ok_or(IoError::UnknownFileType(file_type))?;
-        func(path, data)
+        func(path, data, &self.params)
+    }
+    fn add_param(&mut self, key: ParamKey, value: ParamValue) -> &mut Self {
+        self.params.insert(key, value);
+        self
     }
 }
 #[allow(unused)]
@@ -71,6 +96,18 @@ pub struct FakeAdapter {
     pub read_fns: ReadMap,
     pub write_fns: WriteMap,
     pub files: FakeFileMap,
+    pub params: HashMap<ParamKey, ParamValue>,
+}
+
+impl FakeAdapter {
+    pub fn new(read_fns: ReadMap, write_fns: WriteMap, files: FakeFileMap) -> Self {
+        Self {
+            read_fns,
+            write_fns,
+            files,
+            params: HashMap::new(),
+        }
+    }
 }
 
 impl Adapter for FakeAdapter {
@@ -85,7 +122,6 @@ impl Adapter for FakeAdapter {
         };
         Ok(val)
     }
-
     fn write(
         &mut self,
         path: &Path,
@@ -94,5 +130,9 @@ impl Adapter for FakeAdapter {
     ) -> std::result::Result<(), IoError> {
         self.files.insert(path.to_path_buf(), data);
         Ok(())
+    }
+    fn add_param(&mut self, key: ParamKey, value: ParamValue) -> &mut Self {
+        self.params.insert(key, value);
+        self
     }
 }

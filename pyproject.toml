@@ -32,3 +32,11 @@ dev = [
 
 [tool.maturin]
 features = ["pyo3/extension-module"]
+module-name = "pepy_stats_rs"
+python-source = "python"
+python-packages = ["pepy_tech_stats"]
+strip = true
+
+[tool.uv]
+# Rebuild package when any rust files change
+cache-keys = [{file = "pyproject.toml"}, {file = "rust/Cargo.toml"}, {file = "**/*.rs"}]

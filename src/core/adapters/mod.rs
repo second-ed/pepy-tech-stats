@@ -1,6 +1,7 @@
 mod io_adapter_builder;
 mod io_adapters;
 mod io_funcs;
+mod io_params;
 
 use crate::core::adapters::io_adapters::FakeFileMap;
 pub(crate) use crate::core::adapters::{io_adapter_builder::AdapterBuilder, io_adapters::Adapter};

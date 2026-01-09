@@ -1,3 +1,7 @@
+use std::path::PathBuf;
+
+use crate::core::adapters::{Adapter, FileType};
+
 pub mod adapters;
 
 // use crate::core::adapters::Adapter;
@@ -6,9 +10,25 @@ pub mod adapters;
 // use log;
 // use std::io::Write;
 
-// pub fn main(adapter: impl Adapter, projects: Vec<String>, api_key: String) {
-//     let _ = configure_logger();
-// }
+pub enum RetCode {
+    OK,
+    ERR,
+}
+
+pub fn main(
+    adapter: &mut impl Adapter,
+    projects: Vec<String>,
+    api_key: String,
+) -> Result<RetCode, RetCode> {
+    // let _ = configure_logger();
+
+    // let res = adapter.read(
+    //     &PathBuf::from("../pepy-tech-stats/README.md"),
+    //     FileType::Str,
+    // );
+    // let _ = dbg!(res);
+    Ok(RetCode::OK)
+}
 
 // pub fn configure_logger(
 // ) -> std::result::Result<flexi_logger::LoggerHandle, flexi_logger::FlexiLoggerError> {
