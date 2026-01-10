@@ -31,7 +31,7 @@ fn parse_readme_table(
     readme: &ReadMe,
     readme_table: ReadMeTable,
 ) -> Result<ReadMe, PepyStatsError> {
-    let pattern = Regex::new(r"(## python packages)(.*?)(::)")?;
+    let pattern = Regex::new(r"(?s)(## python packages)(.*?)(::)")?;
     Ok(ReadMe(
         pattern
             .replace(&readme.0, format!("$1\n{}\n$3", readme_table.into_string()))
