@@ -1,15 +1,15 @@
-use std::{collections::HashMap, fmt, fs, path::Path};
-
 use crate::core::adapters::{io_adapters::IoError, io_params::Extras};
 use reqwest::{
     blocking::Client,
     header::{HeaderMap, HeaderName, HeaderValue},
 };
 use serde_json::Value;
+use std::{fmt, fs, path::Path};
 
 #[derive(Debug, Clone, Copy, Hash, Eq, PartialEq)]
 pub enum FileType {
     Str,
+    Json,
 }
 impl fmt::Display for FileType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -27,6 +27,12 @@ impl IoValue {
     pub fn to_string(&self) -> Result<String, IoError> {
         match self {
             IoValue::Str(s) => Ok(s.to_string()),
+            _ => Err(IoError::TypeMismatch),
+        }
+    }
+    pub fn to_json(&self) -> Result<Value, IoError> {
+        match self {
+            IoValue::Json(j) => Ok(j.to_owned()),
             _ => Err(IoError::TypeMismatch),
         }
     }

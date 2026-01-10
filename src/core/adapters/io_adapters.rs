@@ -2,6 +2,7 @@ use crate::core::adapters::{
     io_funcs::{FileType, IoValue, ReadFn, WriteFn},
     io_params::{ParamKey, ParamValue},
 };
+use log;
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
@@ -23,13 +24,15 @@ pub enum IoError {
     #[error("IoError: {0}")]
     Io(std::io::Error),
     #[error("JsonError: {0}")]
-    Json(serde_json::Error),
+    Json(#[from] serde_json::Error),
     #[error("Value cannot be converted into FileType")]
     TypeMismatch,
     #[error("reqwest error: {0}")]
     ReqwestError(#[from] reqwest::Error),
     #[error("external error: {0}")]
     External(#[from] Box<dyn std::error::Error>),
+    #[error("PolarsError: {0}")]
+    Polars(#[from] polars::prelude::PolarsError),
 }
 
 impl From<std::io::Error> for IoError {
@@ -71,6 +74,7 @@ impl Adapter for RealAdapter {
             .read_fns
             .get(&file_type)
             .ok_or(IoError::UnknownFileType(file_type))?;
+        log::info!("reading: {:?}", path);
         func(path, &self.params)
     }
 
@@ -119,6 +123,7 @@ impl Adapter for FakeAdapter {
 
         let val = match file_type {
             FileType::Str => IoValue::Str(res.to_string()?),
+            FileType::Json => res.to_owned(),
         };
         Ok(val)
     }

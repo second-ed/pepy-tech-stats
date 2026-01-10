@@ -3,14 +3,20 @@ mod io_adapters;
 mod io_funcs;
 mod io_params;
 
-use crate::core::adapters::io_adapters::FakeFileMap;
-pub(crate) use crate::core::adapters::{io_adapter_builder::AdapterBuilder, io_adapters::Adapter};
-pub(crate) use io_funcs::{read_str, write_str, FileType};
+pub(crate) use crate::core::adapters::{
+    io_adapter_builder::AdapterBuilder,
+    io_adapters::{Adapter, FakeFileMap},
+};
+pub use io_adapters::IoError;
+pub use io_funcs::IoValue;
+pub(crate) use io_funcs::{get_request, read_str, write_str, FileType};
+pub use io_params::{ParamKey, ParamValue};
 
 fn register_fns() -> AdapterBuilder {
     AdapterBuilder::new()
         .register_read(FileType::Str, read_str)
         .register_write(FileType::Str, write_str)
+        .register_read(FileType::Json, get_request)
 }
 
 pub fn get_real_adapter() -> impl Adapter {
