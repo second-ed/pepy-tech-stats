@@ -10,6 +10,7 @@ use std::{fmt, fs, path::Path};
 pub enum FileType {
     Str,
     Json,
+    ApiCall,
 }
 impl fmt::Display for FileType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

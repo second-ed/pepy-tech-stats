@@ -16,7 +16,7 @@ fn register_fns() -> AdapterBuilder {
     AdapterBuilder::new()
         .register_read(FileType::Str, read_str)
         .register_write(FileType::Str, write_str)
-        .register_read(FileType::Json, get_request)
+        .register_read(FileType::ApiCall, get_request)
 }
 
 pub fn get_real_adapter() -> impl Adapter {

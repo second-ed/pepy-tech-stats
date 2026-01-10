@@ -124,6 +124,7 @@ impl Adapter for FakeAdapter {
         let val = match file_type {
             FileType::Str => IoValue::Str(res.to_string()?),
             FileType::Json => res.to_owned(),
+            FileType::ApiCall => res.to_owned(),
         };
         Ok(val)
     }
