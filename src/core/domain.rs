@@ -94,7 +94,7 @@ pub fn responses_to_df(values: Vec<IoValue>) -> Result<DataFrame, IoError> {
 }
 
 pub fn transform_dataframe(df: DataFrame) -> Result<DataFrame, IoError> {
-    let yesterday = (Utc::now().date_naive() - Duration::days(3)).to_string();
+    let yesterday = (Utc::now().date_naive() - Duration::days(1)).to_string();
     log::info!("yesterday: {:?}", yesterday);
     dbg!(&df);
 
