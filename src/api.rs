@@ -1,4 +1,4 @@
-use crate::core::{adapters::get_real_adapter, main, RetCode};
+use crate::core::{adapters::get_real_adapter, domain::errors::PepyStatsError, main, RetCode};
 use pyo3::prelude::*;
 
 #[pyfunction]
@@ -8,8 +8,6 @@ fn py_main(projects: Vec<String>, api_key: String) -> PyResult<i8> {
     match main(&mut adapter, projects, api_key) {
         Ok(RetCode::OK) => Ok(0),
         Ok(RetCode::ERR) => Ok(1),
-        Err(RetCode::OK) => Ok(2),
-        Err(RetCode::ERR) => Ok(3),
         _ => Ok(-1),
     }
 }

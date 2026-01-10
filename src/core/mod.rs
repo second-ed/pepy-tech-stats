@@ -1,9 +1,16 @@
 pub mod adapters;
 pub mod domain;
 
+use crate::core::{adapters::IoValue, domain::errors::PepyStatsError};
+use chrono::{Duration, Utc};
+use polars::prelude::col;
+use polars::prelude::*;
+use serde_json::json;
+
 use crate::core::adapters::{Adapter, FileType, ParamKey, ParamValue};
 use crate::core::domain::extract_project_stats::{process_project_stats, REQUESTS_PER_MIN};
-use crate::core::domain::transform::{responses_to_df, transform_dataframe};
+use crate::core::domain::transform::{df_to_md, responses_to_df, transform_dataframe};
+use crate::core::domain::update_readme::update_readme;
 use flexi_logger::DeferredNow;
 use flexi_logger::{Cleanup, Criterion, FileSpec, Logger, Naming};
 use log;
@@ -19,20 +26,56 @@ pub fn main(
     adapter: &mut impl Adapter,
     projects: Vec<String>,
     api_key: String,
-) -> Result<RetCode, RetCode> {
+) -> Result<RetCode, PepyStatsError> {
     let _ = configure_logger();
     log::info!("Starting process for projects: {:?}", projects);
     adapter.add_param(ParamKey::ApiKey, ParamValue::Str(api_key));
 
-    // let transformed_df = process_project_stats(adapter, projects, REQUESTS_PER_MIN)
-    //     .and_then(responses_to_df)
-    //     .and_then(transform_dataframe);
+    // SCRAP
 
-    // let _ = dbg!(transformed_df);
+    fn mock_responses() -> Result<Vec<IoValue>, PepyStatsError> {
+        let yesterday = (Utc::now().date_naive() - Duration::days(1)).to_string();
 
-    let res = adapter.read(&PathBuf::from("./README.md"), FileType::Str);
+        Ok(vec![
+            IoValue::Json(json!({
+                "id": "some_package",
+                "total_downloads": 100,
+                "versions": ["0.1.0", "0.2.0"],
+                "downloads": {
+                    yesterday.clone(): {
+                        "0.1.0": 10,
+                        "0.2.0": 10
+                    },
+                    "2026-01-01": {
+                        "0.1.0": 5,
+                        "0.2.0": 20
+                    },
+                },
+            })),
+            IoValue::Json(json!({
+                "id": "some_other_package",
+                "total_downloads": 200,
+                "versions": ["0.1.0", "0.2.0"],
+                "downloads": {
+                    yesterday.clone(): {
+                        "0.1.0": 30,
+                        "0.2.0": 30
+                    },
+                    "2026-01-01": {
+                        "0.1.0": 5,
+                        "0.2.0": 20
+                    },
+                },
+            })),
+        ])
+    }
 
-    let _ = dbg!(res);
+    let readme_table = mock_responses()
+        .and_then(responses_to_df)
+        .and_then(transform_dataframe)
+        .and_then(df_to_md)?;
+
+    let _ = update_readme(adapter, readme_table, "./README.md");
 
     Ok(RetCode::OK)
 }

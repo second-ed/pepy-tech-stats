@@ -2,53 +2,29 @@ use crate::core::adapters::{
     io_funcs::{FileType, IoValue, ReadFn, WriteFn},
     io_params::{ParamKey, ParamValue},
 };
+use crate::core::domain::errors::PepyStatsError;
 use log;
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
 };
-use thiserror::Error;
 
 pub type ReadMap = HashMap<FileType, ReadFn>;
 pub type WriteMap = HashMap<FileType, WriteFn>;
 pub type FakeFileMap = HashMap<PathBuf, IoValue>;
 
-#[derive(Debug, Error)]
-pub enum IoError {
-    #[error("file not found at path: {0}")]
-    NotFound(PathBuf),
-    #[error("adapter given unknown file type: {0}")]
-    UnknownFileType(FileType),
-    #[error("function given unknown file type: {0}")]
-    InvalidFileType(FileType),
-    #[error("IoError: {0}")]
-    Io(std::io::Error),
-    #[error("JsonError: {0}")]
-    Json(#[from] serde_json::Error),
-    #[error("Value cannot be converted into FileType")]
-    TypeMismatch,
-    #[error("reqwest error: {0}")]
-    ReqwestError(#[from] reqwest::Error),
-    #[error("external error: {0}")]
-    External(#[from] Box<dyn std::error::Error>),
-    #[error("PolarsError: {0}")]
-    Polars(#[from] polars::prelude::PolarsError),
-}
-
-impl From<std::io::Error> for IoError {
-    fn from(e: std::io::Error) -> Self {
-        IoError::Io(e)
-    }
-}
-
 pub trait Adapter {
-    fn read(&mut self, path: &Path, file_type: FileType) -> std::result::Result<IoValue, IoError>;
+    fn read(
+        &mut self,
+        path: &Path,
+        file_type: FileType,
+    ) -> std::result::Result<IoValue, PepyStatsError>;
     fn write(
         &mut self,
         path: &Path,
         data: IoValue,
         file_type: FileType,
-    ) -> std::result::Result<(), IoError>;
+    ) -> std::result::Result<(), PepyStatsError>;
     fn add_param(&mut self, key: ParamKey, value: ParamValue) -> &mut Self;
 }
 
@@ -69,11 +45,15 @@ impl RealAdapter {
 }
 
 impl Adapter for RealAdapter {
-    fn read(&mut self, path: &Path, file_type: FileType) -> std::result::Result<IoValue, IoError> {
+    fn read(
+        &mut self,
+        path: &Path,
+        file_type: FileType,
+    ) -> std::result::Result<IoValue, PepyStatsError> {
         let func = self
             .read_fns
             .get(&file_type)
-            .ok_or(IoError::UnknownFileType(file_type))?;
+            .ok_or(PepyStatsError::UnknownFileType(file_type))?;
         log::info!("reading: {:?}", path);
         func(path, &self.params)
     }
@@ -83,11 +63,11 @@ impl Adapter for RealAdapter {
         path: &Path,
         data: IoValue,
         file_type: FileType,
-    ) -> std::result::Result<(), IoError> {
+    ) -> std::result::Result<(), PepyStatsError> {
         let func = self
             .write_fns
             .get(&file_type)
-            .ok_or(IoError::UnknownFileType(file_type))?;
+            .ok_or(PepyStatsError::UnknownFileType(file_type))?;
         func(path, data, &self.params)
     }
     fn add_param(&mut self, key: ParamKey, value: ParamValue) -> &mut Self {
@@ -115,11 +95,11 @@ impl FakeAdapter {
 }
 
 impl Adapter for FakeAdapter {
-    fn read(&mut self, path: &Path, file_type: FileType) -> Result<IoValue, IoError> {
+    fn read(&mut self, path: &Path, file_type: FileType) -> Result<IoValue, PepyStatsError> {
         let res = self
             .files
             .get(path)
-            .ok_or_else(|| IoError::NotFound(path.to_path_buf().clone()))?;
+            .ok_or_else(|| PepyStatsError::NotFound(path.to_path_buf().clone()))?;
 
         let val = match file_type {
             FileType::Str => IoValue::Str(res.to_string()?),
@@ -133,7 +113,7 @@ impl Adapter for FakeAdapter {
         path: &Path,
         data: IoValue,
         _file_type: FileType,
-    ) -> std::result::Result<(), IoError> {
+    ) -> std::result::Result<(), PepyStatsError> {
         self.files.insert(path.to_path_buf(), data);
         Ok(())
     }

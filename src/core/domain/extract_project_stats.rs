@@ -1,4 +1,5 @@
-use crate::core::adapters::{Adapter, FileType, IoError, IoValue};
+use crate::core::adapters::{Adapter, FileType, IoValue};
+use crate::core::domain::errors::PepyStatsError;
 use itertools::Itertools;
 use log;
 use std::path::PathBuf;
@@ -36,8 +37,8 @@ pub fn process_project_stats(
     adapter: &mut impl Adapter,
     projects: Vec<String>,
     requests_per_min: usize,
-) -> Result<Vec<IoValue>, IoError> {
-    let mut results: Vec<Result<Vec<IoValue>, IoError>> = Vec::new();
+) -> Result<Vec<IoValue>, PepyStatsError> {
+    let mut results: Vec<Result<Vec<IoValue>, PepyStatsError>> = Vec::new();
 
     for (idx, batch) in projects
         .iter()
@@ -55,7 +56,7 @@ pub fn process_project_stats(
     }
     results
         .into_iter()
-        .collect::<Result<Vec<Vec<IoValue>>, IoError>>()
+        .collect::<Result<Vec<Vec<IoValue>>, PepyStatsError>>()
         .map(|batches| batches.into_iter().flatten().collect())
 }
 
@@ -63,8 +64,8 @@ pub fn process_project_stats(
 fn process_batch_project_stats(
     adapter: &mut impl Adapter,
     projects: Vec<&String>,
-) -> Result<Vec<IoValue>, IoError> {
-    let results: Result<Vec<IoValue>, IoError> = projects
+) -> Result<Vec<IoValue>, PepyStatsError> {
+    let results: Result<Vec<IoValue>, PepyStatsError> = projects
         .iter()
         .map(|project| PepyUrl::new(project).into_url())
         .map(PathBuf::from)

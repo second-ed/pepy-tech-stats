@@ -1,4 +1,5 @@
-use crate::core::adapters::{IoError, IoValue};
+use crate::core::adapters::IoValue;
+use crate::core::domain::errors::PepyStatsError;
 use chrono::{Duration, Utc};
 use log;
 use polars::lazy::dsl::sum_horizontal;
@@ -6,7 +7,7 @@ use polars::prelude::*;
 use polars::prelude::{col, DataFrame, SortMultipleOptions};
 
 #[inline(always)]
-pub fn responses_to_df(values: Vec<IoValue>) -> Result<DataFrame, IoError> {
+pub fn responses_to_df(values: Vec<IoValue>) -> Result<DataFrame, PepyStatsError> {
     let json_rows: Vec<serde_json::Value> = values
         .into_iter()
         .map(|v| match v {
@@ -18,7 +19,7 @@ pub fn responses_to_df(values: Vec<IoValue>) -> Result<DataFrame, IoError> {
 }
 
 #[inline(always)]
-pub fn transform_dataframe(df: DataFrame) -> Result<DataFrame, IoError> {
+pub fn transform_dataframe(df: DataFrame) -> Result<DataFrame, PepyStatsError> {
     let yesterday = (Utc::now().date_naive() - Duration::days(1)).to_string();
     log::info!("yesterday: {:?}", yesterday);
     dbg!(&df);
@@ -53,10 +54,57 @@ pub fn transform_dataframe(df: DataFrame) -> Result<DataFrame, IoError> {
     Ok(df)
 }
 
+#[derive(Debug)]
+pub struct ReadMeTable {
+    lines: Vec<String>,
+}
+
+impl ReadMeTable {
+    pub fn new(lines: Vec<String>) -> Self {
+        Self { lines }
+    }
+
+    pub fn into_string(self) -> String {
+        self.lines.join("\n")
+    }
+}
+
+pub fn df_to_md(df: DataFrame) -> Result<ReadMeTable, PepyStatsError> {
+    let packages = df.column("package")?.str()?;
+    let totals = df.column("total_downloads")?.i64()?;
+    let yesterday = df.column("yesterday_downloads")?.i64()?;
+
+    let mut lines = vec![
+        format!(
+            "total downloads: `{}`\n",
+            df.column("total_downloads")?.i64()?.sum().unwrap_or(0),
+        ),
+        format!(
+            "yesterday downloads: `{}`\n",
+            df.column("yesterday_downloads")?.i64()?.sum().unwrap_or(0),
+        ),
+        "### breakdown by package".to_string(),
+        "| package | total_downloads | yesterday_downloads |".to_string(),
+        "| --- | --- | --- |".to_string(),
+    ];
+
+    for i in 0..df.height() {
+        lines.push(format!(
+            "| {} | {} | {} |",
+            packages.get(i).unwrap_or(""),
+            totals.get(i).unwrap_or(0),
+            yesterday.get(i).unwrap_or(0)
+        ));
+    }
+
+    Ok(ReadMeTable::new(lines))
+}
+
 #[cfg(test)]
 mod tests {
     use crate::core::{
-        adapters::{IoError, IoValue},
+        adapters::IoValue,
+        domain::errors::PepyStatsError,
         domain::transform::{responses_to_df, transform_dataframe},
     };
     use chrono::{Duration, Utc};
@@ -65,7 +113,7 @@ mod tests {
     use serde_json::json;
     use test_case::test_case;
 
-    fn mock_responses() -> Result<Vec<IoValue>, IoError> {
+    fn mock_responses() -> Result<Vec<IoValue>, PepyStatsError> {
         let yesterday = (Utc::now().date_naive() - Duration::days(1)).to_string();
 
         Ok(vec![
@@ -107,7 +155,7 @@ mod tests {
     #[test_case(mock_responses(), "some_other_package".to_string(), "total_downloads".to_string(), Some(200))]
     #[test_case(mock_responses(), "some_other_package".to_string(), "yesterday_downloads".to_string(), Some(60))]
     fn test_responses_to_transformed_df(
-        input_data: Result<Vec<IoValue>, IoError>,
+        input_data: Result<Vec<IoValue>, PepyStatsError>,
         package: String,
         col_name: String,
         expected_result: Option<i64>,

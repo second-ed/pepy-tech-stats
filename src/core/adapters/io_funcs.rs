@@ -1,4 +1,5 @@
-use crate::core::adapters::{io_adapters::IoError, io_params::Extras};
+use crate::core::adapters::io_params::Extras;
+use crate::core::domain::errors::PepyStatsError;
 use reqwest::{
     blocking::Client,
     header::{HeaderMap, HeaderName, HeaderValue},
@@ -25,39 +26,49 @@ pub enum IoValue {
     Json(serde_json::Value),
 }
 impl IoValue {
-    pub fn to_string(&self) -> Result<String, IoError> {
+    pub fn to_string(&self) -> Result<String, PepyStatsError> {
         match self {
             IoValue::Str(s) => Ok(s.to_string()),
-            _ => Err(IoError::TypeMismatch),
+            _ => Err(PepyStatsError::TypeMismatch),
         }
     }
-    pub fn to_json(&self) -> Result<Value, IoError> {
+    pub fn to_json(&self) -> Result<Value, PepyStatsError> {
         match self {
             IoValue::Json(j) => Ok(j.to_owned()),
-            _ => Err(IoError::TypeMismatch),
+            _ => Err(PepyStatsError::TypeMismatch),
         }
     }
 }
 
-pub type ReadFn = fn(&Path, &Extras) -> Result<IoValue, IoError>;
-pub type WriteFn = fn(&Path, IoValue, &Extras) -> Result<(), IoError>;
+pub type ReadFn = fn(&Path, &Extras) -> Result<IoValue, PepyStatsError>;
+pub type WriteFn = fn(&Path, IoValue, &Extras) -> Result<(), PepyStatsError>;
 
-pub(crate) fn read_str(path: &Path, _extras: &Extras) -> std::result::Result<IoValue, IoError> {
+pub(crate) fn read_str(
+    path: &Path,
+    _extras: &Extras,
+) -> std::result::Result<IoValue, PepyStatsError> {
     let res = fs::read_to_string(path)?;
     Ok(IoValue::Str(res))
 }
 
-pub(crate) fn write_str(path: &Path, contents: IoValue, _extras: &Extras) -> Result<(), IoError> {
+pub(crate) fn write_str(
+    path: &Path,
+    contents: IoValue,
+    _extras: &Extras,
+) -> Result<(), PepyStatsError> {
     match contents {
         IoValue::Str(s) => {
             fs::write(path, s)?;
             Ok(())
         }
-        _ => Err(IoError::InvalidFileType(FileType::Str)),
+        _ => Err(PepyStatsError::InvalidFileType(FileType::Str)),
     }
 }
 
-pub(crate) fn get_request(url: &Path, extras: &Extras) -> std::result::Result<IoValue, IoError> {
+pub(crate) fn get_request(
+    url: &Path,
+    extras: &Extras,
+) -> std::result::Result<IoValue, PepyStatsError> {
     pub fn extras_to_headers(extras: &Extras) -> Result<HeaderMap, Box<dyn std::error::Error>> {
         let mut headers = HeaderMap::new();
 
@@ -77,6 +88,6 @@ pub(crate) fn get_request(url: &Path, extras: &Extras) -> std::result::Result<Io
         .send()?;
     match res.json() {
         Ok(j) => Ok(IoValue::Json(j)),
-        Err(e) => Err(IoError::ReqwestError(e)),
+        Err(e) => Err(PepyStatsError::ReqwestError(e)),
     }
 }

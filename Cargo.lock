@@ -1507,6 +1507,7 @@ dependencies = [
  "log",
  "polars",
  "pyo3",
+ "regex",
  "reqwest",
  "serde",
  "serde_json",
