@@ -32,7 +32,8 @@ jobs:
         key: ${{ runner.os }}-cargo-target-release-${{ hashFiles('**/Cargo.lock') }}
     - name: Build release version
       if: steps.release-cache.outputs.cache-hit != 'true'
-      run: cargo build --release
+      run: cargo build
+      working-directory: ${{ github.workspace }}
     - name: fmt
       run: cargo fmt --all -- --check
     - name: clippy
