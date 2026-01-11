@@ -1,5 +1,4 @@
-use crate::core::adapters::io_params::Extras;
-use crate::core::domain::errors::PepyStatsError;
+use crate::core::{adapters::io_params::Extras, domain::errors::PepyStatsError};
 use reqwest::{
     blocking::Client,
     header::{HeaderMap, HeaderName, HeaderValue},

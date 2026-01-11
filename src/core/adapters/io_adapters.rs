@@ -1,8 +1,10 @@
-use crate::core::adapters::{
-    io_funcs::{FileType, IoValue, ReadFn, WriteFn},
-    io_params::{ParamKey, ParamValue},
+use crate::core::{
+    adapters::{
+        io_funcs::{FileType, IoValue, ReadFn, WriteFn},
+        io_params::{ParamKey, ParamValue},
+    },
+    domain::errors::PepyStatsError,
 };
-use crate::core::domain::errors::PepyStatsError;
 use log;
 use std::{
     collections::HashMap,

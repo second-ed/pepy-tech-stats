@@ -1,5 +1,7 @@
-use crate::core::adapters::{Adapter, FileType, IoValue};
-use crate::core::domain::errors::PepyStatsError;
+use crate::core::{
+    adapters::{Adapter, FileType, IoValue},
+    domain::errors::PepyStatsError,
+};
 use itertools::Itertools;
 use log;
 use std::path::PathBuf;

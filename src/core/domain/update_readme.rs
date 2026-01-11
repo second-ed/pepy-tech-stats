@@ -1,6 +1,7 @@
-use crate::core::adapters::{Adapter, FileType, IoValue};
-use crate::core::domain::errors::PepyStatsError;
-use crate::core::domain::transform::ReadMeTable;
+use crate::core::{
+    adapters::{Adapter, FileType, IoValue},
+    domain::{errors::PepyStatsError, transform::ReadMeTable},
+};
 use regex::Regex;
 use std::path::PathBuf;
 

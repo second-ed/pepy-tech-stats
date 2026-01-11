@@ -1,21 +1,20 @@
 pub mod adapters;
 pub mod domain;
 
-use crate::core::{adapters::IoValue, domain::errors::PepyStatsError};
+use crate::core::{
+    adapters::{Adapter, IoValue, ParamKey, ParamValue},
+    domain::{
+        errors::PepyStatsError,
+        extract_project_stats::{process_project_stats, REQUESTS_PER_MIN},
+        transform::{df_to_md, responses_to_df, transform_dataframe},
+        update_readme::update_readme,
+    },
+};
 use chrono::{Duration, Utc};
-use polars::prelude::col;
-use polars::prelude::*;
-use serde_json::json;
-
-use crate::core::adapters::{Adapter, FileType, ParamKey, ParamValue};
-use crate::core::domain::extract_project_stats::{process_project_stats, REQUESTS_PER_MIN};
-use crate::core::domain::transform::{df_to_md, responses_to_df, transform_dataframe};
-use crate::core::domain::update_readme::update_readme;
-use flexi_logger::DeferredNow;
-use flexi_logger::{Cleanup, Criterion, FileSpec, Logger, Naming};
+use flexi_logger::{Cleanup, Criterion, DeferredNow, FileSpec, Logger, Naming};
 use log;
+use serde_json::json;
 use std::io::Write;
-use std::path::{Path, PathBuf};
 
 pub enum RetCode {
     OK,
@@ -70,7 +69,8 @@ pub fn main(
         ])
     }
 
-    let readme_table = mock_responses()
+    // let readme_table = mock_responses()
+    let readme_table = process_project_stats(adapter, projects, REQUESTS_PER_MIN)
         .and_then(responses_to_df)
         .and_then(transform_dataframe)
         .and_then(df_to_md)?;

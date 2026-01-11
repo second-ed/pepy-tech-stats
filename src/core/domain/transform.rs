@@ -1,5 +1,4 @@
-use crate::core::adapters::IoValue;
-use crate::core::domain::errors::PepyStatsError;
+use crate::core::{adapters::IoValue, domain::errors::PepyStatsError};
 use chrono::{Duration, Utc};
 use log;
 use polars::lazy::dsl::sum_horizontal;
@@ -22,7 +21,6 @@ pub fn responses_to_df(values: Vec<IoValue>) -> Result<DataFrame, PepyStatsError
 pub fn transform_dataframe(df: DataFrame) -> Result<DataFrame, PepyStatsError> {
     let yesterday = (Utc::now().date_naive() - Duration::days(1)).to_string();
     log::info!("yesterday: {:?}", yesterday);
-    dbg!(&df);
 
     let lf = df
         .lazy()
@@ -104,8 +102,10 @@ pub fn df_to_md(df: DataFrame) -> Result<ReadMeTable, PepyStatsError> {
 mod tests {
     use crate::core::{
         adapters::IoValue,
-        domain::errors::PepyStatsError,
-        domain::transform::{responses_to_df, transform_dataframe},
+        domain::{
+            errors::PepyStatsError,
+            transform::{responses_to_df, transform_dataframe},
+        },
     };
     use chrono::{Duration, Utc};
     use polars::prelude::col;

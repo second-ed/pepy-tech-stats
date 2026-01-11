@@ -1,5 +1,7 @@
-use crate::core::adapters::io_adapters::{FakeAdapter, FakeFileMap, RealAdapter};
-use crate::core::adapters::io_funcs::{FileType, ReadFn, WriteFn};
+use crate::core::adapters::{
+    io_adapters::{FakeAdapter, FakeFileMap, RealAdapter},
+    io_funcs::{FileType, ReadFn, WriteFn},
+};
 use std::collections::HashMap;
 
 pub struct AdapterBuilder {
