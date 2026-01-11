@@ -1,9 +1,6 @@
-[build-system]
-requires = ["maturin>=1.9,<2.0"]
-build-backend = "maturin"
-
 [project]
 name = "pepy-tech-stats"
+version = "0.1.0"
 readme = "README.md"
 requires-python = ">=3.12"
 classifiers = [
@@ -11,7 +8,6 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
-dynamic = ["version"]
 dependencies = [
     "attrs>=25.4.0",
     "danom>=0.8.1",
@@ -29,14 +25,3 @@ dev = [
     "repo-mapper-rs>=0.3.0",
     "ruff>=0.14.10",
 ]
-
-[tool.maturin]
-features = ["pyo3/extension-module"]
-module-name = "pepy_stats_rs"
-python-source = "python"
-python-packages = ["pepy_tech_stats"]
-strip = true
-
-[tool.uv]
-# Rebuild package when any rust files change
-cache-keys = [{file = "pyproject.toml"}, {file = "rust/Cargo.toml"}, {file = "**/*.rs"}]

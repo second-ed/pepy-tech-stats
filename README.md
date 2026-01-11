@@ -35,6 +35,25 @@ yesterday downloads: `204`
 │       │   └── logger.py
 │       ├── __init__.py
 │       └── __main__.py
+├── src
+│   ├── core
+│   │   ├── adapters
+│   │   │   ├── io_adapter_builder.rs
+│   │   │   ├── io_adapters.rs
+│   │   │   ├── io_funcs.rs
+│   │   │   ├── io_params.rs
+│   │   │   └── mod.rs
+│   │   ├── domain
+│   │   │   ├── errors.rs
+│   │   │   ├── extract_project_stats.rs
+│   │   │   ├── mod.rs
+│   │   │   ├── transform.rs
+│   │   │   └── update_readme.rs
+│   │   └── mod.rs
+│   ├── lib.rs
+│   └── main.rs
+├── tests
+│   └── integration_tests.rs
 ├── .pre-commit-config.yaml
 ├── Cargo.lock
 ├── Cargo.toml

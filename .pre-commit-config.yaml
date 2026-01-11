@@ -51,7 +51,7 @@ repos:
           - --gitignore-path
           - ./.gitignore
           - --allowed-exts
-          - py,md,yaml,toml,lock
+          - py,rs,md,yaml,toml,lock
           - --ignore-dirs
           - .venv,target,.git,mock_data
           # - --ignore-hidden

@@ -497,7 +497,8 @@ wheels = [
 
 [[package]]
 name = "pepy-tech-stats"
-source = { editable = "." }
+version = "0.1.0"
+source = { virtual = "." }
 dependencies = [
     { name = "attrs" },
     { name = "danom" },

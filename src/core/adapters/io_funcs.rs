@@ -79,12 +79,18 @@ pub(crate) fn get_request(
 
         Ok(headers)
     }
+
+    log::info!("Sending request to: {:?}", &url);
+
     let client = Client::new();
     let headers = extras_to_headers(extras)?;
     let res = client
         .get(url.to_string_lossy().to_string())
         .headers(headers)
         .send()?;
+
+    log::info!("{:?} | {:?}", &res.url().as_str(), &res.status());
+
     match res.json() {
         Ok(j) => Ok(IoValue::Json(j)),
         Err(e) => Err(PepyStatsError::ReqwestError(e)),

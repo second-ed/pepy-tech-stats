@@ -6,15 +6,19 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
 name = "pepy_tech_stats"
-crate-type = ["cdylib", "rlib"]
+crate-type = ["rlib"]
+
+[[bin]]
+name = "pepy-tech-stats"
+path = "src/main.rs"
 
 [dependencies]
 chrono = "0.4.42"
+clap = { version = "4.5.54", features = ["derive"] }
 flexi_logger = "0.31.7"
 itertools = "0.14.0"
 log = "0.4.29"
 polars = { version = "0.51.0", features = ["lazy", "temporal", "dtype-date", "dtype-datetime", "json"] }
-pyo3 = "0.25.0"
 regex = "1.12.2"
 reqwest = {version = "0.12.24", features = ["blocking", "json"]}
 serde = {version = "1.0.228", features = ["derive"]}

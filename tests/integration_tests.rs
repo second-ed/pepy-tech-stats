@@ -1,7 +1,7 @@
 use chrono::{Duration, Utc};
 use pepy_tech_stats::core::{
     adapters::{get_fake_adapter, Adapter, FakeFileMap, FileType, IoValue},
-    main,
+    run,
 };
 use serde_json::json;
 use std::{collections::HashMap, path::PathBuf};
@@ -76,10 +76,10 @@ fn case_1() -> TestCase {
 }
 
 #[test_case(case_1_files(), case_1())]
-fn test_main(files: HashMap<PathBuf, IoValue>, case: TestCase) {
+fn test_run(files: HashMap<PathBuf, IoValue>, case: TestCase) {
     let mut adapter = get_fake_adapter(files);
 
-    let res = main(&mut adapter, case.projects, "abc-123".to_string());
+    let res = run(&mut adapter, case.projects, "abc-123".to_string());
     let readme = adapter.read(&PathBuf::from("./README.md"), FileType::Str);
 
     assert!(readme.is_ok());
