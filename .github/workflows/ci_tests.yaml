@@ -1,27 +1,33 @@
-name: CI
-
-on:
+name: Rust
+'on':
   pull_request:
     branches:
-      - "main"
-      - "dev"
-
+    - main
+    - dev
+env:
+  CARGO_TERM_COLOR: always
 jobs:
-  tests:
-    name: python
+  build:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: true
-          cache-dependency-glob: "uv.lock"
-
-      - name: Install the project
-        run: uv sync --dev
-
-      - name: Run tests
-        run: uv run pytest -vv --cov=src --cov-report term-missing:skip-covered --cov-fail-under=75 
+    - uses: actions/checkout@v4
+    - name: Build
+      run: cargo build --verbose
+    - name: Run tests
+      run: cargo test --verbose
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install Clippy
+      run: rustup component add clippy
+    - name: clippy check
+      run: cargo clippy
+  formatting:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install rustfmt
+      run: rustup component add rustfmt
+    - name: Check Formatting
+      run: cargo fmt --all -- --check
