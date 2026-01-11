@@ -19,7 +19,7 @@ impl fmt::Display for FileType {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum IoValue {
     Str(String),
     Json(serde_json::Value),

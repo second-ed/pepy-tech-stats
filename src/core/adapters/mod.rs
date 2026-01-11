@@ -4,10 +4,10 @@ mod io_funcs;
 mod io_params;
 pub(crate) use crate::core::adapters::{
     io_adapter_builder::AdapterBuilder,
-    io_adapters::{Adapter, FakeFileMap},
+    io_funcs::{get_request, read_str, write_str},
 };
-pub use io_funcs::IoValue;
-pub(crate) use io_funcs::{get_request, read_str, write_str, FileType};
+pub use io_adapters::{Adapter, FakeFileMap};
+pub use io_funcs::{FileType, IoValue};
 pub use io_params::{ParamKey, ParamValue};
 
 fn register_fns() -> AdapterBuilder {

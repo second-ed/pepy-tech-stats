@@ -4,8 +4,7 @@ use crate::core::{
 };
 use itertools::Itertools;
 use log;
-use std::path::PathBuf;
-use std::{thread, time::Duration as SleepDuration};
+use std::{path::PathBuf, thread, time::Duration as SleepDuration};
 
 pub const BASE_URL: &str = "https://api.pepy.tech";
 pub const PROJECT_STATS_ENDPOINT: &str = "/api/v2/projects/";

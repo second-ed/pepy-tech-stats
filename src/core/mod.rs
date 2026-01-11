@@ -37,7 +37,7 @@ pub fn main(
 
         Ok(vec![
             IoValue::Json(json!({
-                "id": "some_package",
+                "id": "some-package",
                 "total_downloads": 100,
                 "versions": ["0.1.0", "0.2.0"],
                 "downloads": {
@@ -52,7 +52,7 @@ pub fn main(
                 },
             })),
             IoValue::Json(json!({
-                "id": "some_other_package",
+                "id": "some-other-package",
                 "total_downloads": 200,
                 "versions": ["0.1.0", "0.2.0"],
                 "downloads": {
