@@ -61,5 +61,7 @@ yesterday downloads: `97`
 ├── pyproject.toml
 ├── ruff.toml
 └── uv.lock
+
+(generated with repo-mapper-rs)
 ::
 ```

@@ -13,6 +13,7 @@ dependencies = [
     "danom>=0.8.1",
     "polars>=1.36.1",
     "python-dotenv>=1.2.1",
+    "repo-mapper-rs>=0.4.0",
     "requests>=2.32.5",
 ]
 
