@@ -7,10 +7,11 @@ pub enum ParamKey {
 }
 
 impl ParamKey {
-    pub fn as_str(&self) -> &str {
+    #[must_use]
+    pub const fn as_str(&self) -> &str {
         match self {
-            ParamKey::ApiKey => "X-API-Key",
-            ParamKey::Encoding => "encoding",
+            Self::ApiKey => "X-API-Key",
+            Self::Encoding => "encoding",
         }
     }
 }
@@ -20,9 +21,10 @@ pub enum ParamValue {
 }
 
 impl ParamValue {
-    pub fn as_str(&self) -> &str {
+    #[must_use]
+    pub const fn as_str(&self) -> &str {
         match self {
-            ParamValue::Str(s) => s.as_str(),
+            Self::Str(s) => s.as_str(),
         }
     }
 }

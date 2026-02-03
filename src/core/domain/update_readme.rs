@@ -14,13 +14,13 @@ pub fn update_readme(
     readme_path: &str,
 ) -> Result<(), PepyStatsError> {
     let readme_path = PathBuf::from(readme_path);
-    log::info!("{:?}", readme_table);
-    log::info!("{:?}", readme_path);
+    log::info!("{readme_table:?}");
+    log::info!("{}", readme_path.display());
 
     let current_readme = ReadMe(adapter.read(&readme_path, FileType::Str)?.to_string()?);
     let updated_readme = parse_readme_table(&current_readme, readme_table)?;
-    log::info!("{:?}", current_readme);
-    log::info!("{:?}", updated_readme);
+    log::info!("{current_readme:?}");
+    log::info!("{updated_readme:?}");
     if updated_readme != current_readme {
         adapter.write(&readme_path, IoValue::Str(updated_readme.0), FileType::Str)?;
         log::info!("updated readme");

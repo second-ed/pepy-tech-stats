@@ -24,10 +24,10 @@ fn main() {
         "spaghettree",
     ]
     .into_iter()
-    .map(|elem| elem.to_string())
-    .collect();
+    .map(str::to_string)
+    .collect::<Vec<String>>();
 
-    if let Err(err) = run(&mut adapter, projects, args.api_key) {
+    if let Err(err) = run(&mut adapter, &projects, args.api_key) {
         eprintln!("error: {err}");
         std::process::exit(1);
     }

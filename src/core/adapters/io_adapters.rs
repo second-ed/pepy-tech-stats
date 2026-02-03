@@ -56,7 +56,7 @@ impl Adapter for RealAdapter {
             .read_fns
             .get(&file_type)
             .ok_or(PepyStatsError::UnknownFileType(file_type))?;
-        log::info!("reading: {:?}", path);
+        log::info!("reading: {}", path.display());
         func(path, &self.params)
     }
 
@@ -101,12 +101,11 @@ impl Adapter for FakeAdapter {
         let res = self
             .files
             .get(path)
-            .ok_or_else(|| PepyStatsError::NotFound(path.to_path_buf().clone()))?;
+            .ok_or_else(|| PepyStatsError::NotFound(path.to_path_buf()))?;
 
         let val = match file_type {
             FileType::Str => IoValue::Str(res.to_string()?),
-            FileType::Json => res.to_owned(),
-            FileType::ApiCall => res.to_owned(),
+            FileType::Json | FileType::ApiCall => res.to_owned(),
         };
         Ok(val)
     }

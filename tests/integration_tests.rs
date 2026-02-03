@@ -65,7 +65,7 @@ struct TestCase {
 impl TestCase {
     pub fn new(projects: Vec<&str>, expected_readme: &str) -> Self {
         Self {
-            projects: projects.into_iter().map(|v| v.to_string()).collect(),
+            projects: projects.into_iter().map(str::to_string).collect(),
             expected_readme: IoValue::Str(expected_readme.to_string()),
         }
     }
@@ -75,11 +75,11 @@ fn case_1() -> TestCase {
     TestCase::new(vec!["a"], "## python packages\ntotal downloads: `200`\n\nyesterday downloads: `15`\n\n### breakdown by package\n| package | total_downloads | yesterday_downloads |\n| --- | --- | --- |\n| a | 200 | 15 |\n::")
 }
 
-#[test_case(case_1_files(), case_1())]
-fn test_run(files: HashMap<PathBuf, IoValue>, case: TestCase) {
+#[test_case(case_1_files(), &case_1())]
+fn test_run(files: HashMap<PathBuf, IoValue>, case: &TestCase) {
     let mut adapter = get_fake_adapter(files);
 
-    let res = run(&mut adapter, case.projects, "abc-123".to_string());
+    let _res = run(&mut adapter, &case.projects, "abc-123".to_string());
     let readme = adapter.read(&PathBuf::from("./README.md"), FileType::Str);
 
     assert!(readme.is_ok());

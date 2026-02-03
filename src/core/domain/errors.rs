@@ -28,6 +28,6 @@ pub enum PepyStatsError {
 
 impl From<std::io::Error> for PepyStatsError {
     fn from(e: std::io::Error) -> Self {
-        PepyStatsError::Io(e)
+        Self::Io(e)
     }
 }

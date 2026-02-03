@@ -31,3 +31,11 @@ thiserror = "2.0.17"
 opt-level = "s"
 lto = "fat"
 codegen-units = 1
+
+
+[lints.clippy]
+pedantic = { level = "deny", priority = -1 }
+complexity = { level = "deny", priority = -1 }
+perf = { level = "deny", priority = -1 }
+correctness = { level = "deny", priority = -1 }
+missing_errors_doc = "allow"

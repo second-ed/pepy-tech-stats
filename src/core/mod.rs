@@ -21,17 +21,17 @@ pub enum RetCode {
 
 pub fn run(
     adapter: &mut impl Adapter,
-    projects: Vec<String>,
+    projects: &[String],
     api_key: String,
 ) -> Result<RetCode, PepyStatsError> {
     let _ = configure_logger();
-    log::info!("Starting process for projects: {:?}", projects);
+    log::info!("Starting process for projects: {projects:?}");
     adapter.add_param(ParamKey::ApiKey, ParamValue::Str(api_key));
 
     let readme_table = process_project_stats(adapter, projects, REQUESTS_PER_MIN)
         .and_then(responses_to_df)
         .and_then(transform_dataframe)
-        .and_then(df_to_md)?;
+        .and_then(|df: polars::prelude::DataFrame| df_to_md(&df))?;
 
     let _ = update_readme(adapter, readme_table, "./README.md");
 
@@ -55,7 +55,7 @@ pub fn configure_logger(
         .duplicate_to_stdout(Duplicate::All)
         .log_to_file(FileSpec::default().directory("logs").basename("app"))
         .rotate(
-            Criterion::Size(2000000),
+            Criterion::Size(2_000_000),
             Naming::Timestamps,
             Cleanup::KeepLogFiles(3),
         )

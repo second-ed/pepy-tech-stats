@@ -17,10 +17,12 @@ fn register_fns() -> AdapterBuilder {
         .register_read(FileType::ApiCall, get_request)
 }
 
+#[must_use]
 pub fn get_real_adapter() -> impl Adapter {
     register_fns().get_real_adapter()
 }
 
+#[must_use]
 pub fn get_fake_adapter(files: FakeFileMap) -> impl Adapter {
     register_fns().get_fake_adapter(files)
 }

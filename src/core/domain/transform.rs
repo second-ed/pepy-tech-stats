@@ -6,22 +6,20 @@ use polars::{
     prelude::{col, DataFrame, SortMultipleOptions, *},
 };
 
-#[inline(always)]
 pub fn responses_to_df(values: Vec<IoValue>) -> Result<DataFrame, PepyStatsError> {
     let json_rows: Vec<serde_json::Value> = values
         .into_iter()
         .map(|v| match v {
             IoValue::Json(j) => j,
-            _ => unreachable!(),
+            IoValue::Str(_) => unreachable!(),
         })
         .collect();
     Ok(JsonReader::new(std::io::Cursor::new(serde_json::to_vec(&json_rows)?)).finish()?)
 }
 
-#[inline(always)]
 pub fn transform_dataframe(df: DataFrame) -> Result<DataFrame, PepyStatsError> {
     let yesterday = (Utc::now().date_naive() - Duration::days(1)).to_string();
-    log::info!("yesterday: {:?}", yesterday);
+    log::info!("yesterday: {yesterday:?}");
 
     let lf = df
         .lazy()
@@ -59,16 +57,18 @@ pub struct ReadMeTable {
 }
 
 impl ReadMeTable {
-    pub fn new(lines: Vec<String>) -> Self {
+    #[must_use]
+    pub const fn new(lines: Vec<String>) -> Self {
         Self { lines }
     }
 
+    #[must_use]
     pub fn into_string(self) -> String {
         self.lines.join("\n")
     }
 }
 
-pub fn df_to_md(df: DataFrame) -> Result<ReadMeTable, PepyStatsError> {
+pub fn df_to_md(df: &DataFrame) -> Result<ReadMeTable, PepyStatsError> {
     let packages = df.column("package")?.str()?;
     let totals = df.column("total_downloads")?.i64()?;
     let yesterday = df.column("yesterday_downloads")?.i64()?;
@@ -103,20 +103,15 @@ pub fn df_to_md(df: DataFrame) -> Result<ReadMeTable, PepyStatsError> {
 mod tests {
     use crate::core::{
         adapters::IoValue,
-        domain::{
-            errors::PepyStatsError,
-            transform::{df_to_md, responses_to_df, transform_dataframe, ReadMeTable},
-        },
+        domain::transform::{df_to_md, responses_to_df, transform_dataframe, ReadMeTable},
     };
     use chrono::{Duration, Utc};
-    use polars::prelude::{col, *};
     use serde_json::json;
     use test_case::test_case;
 
-    fn mock_responses() -> Result<Vec<IoValue>, PepyStatsError> {
+    fn mock_responses() -> Vec<IoValue> {
         let yesterday = (Utc::now().date_naive() - Duration::days(1)).to_string();
-
-        Ok(vec![
+        vec![
             IoValue::Json(json!({
                 "id": "some-package",
                 "total_downloads": 100,
@@ -147,7 +142,7 @@ mod tests {
                     },
                 },
             })),
-        ])
+        ]
     }
 
     fn mock_responses_md_table() -> ReadMeTable {
@@ -167,15 +162,12 @@ mod tests {
         )
     }
 
-    #[test_case(mock_responses(), mock_responses_md_table())]
-    fn test_responses_to_transformed_df(
-        input_data: Result<Vec<IoValue>, PepyStatsError>,
-        expected_result: ReadMeTable,
-    ) {
-        let res = input_data
+    #[test_case(mock_responses(), &mock_responses_md_table())]
+    fn test_responses_to_transformed_df(input_data: Vec<IoValue>, expected_result: &ReadMeTable) {
+        let res = Ok(input_data)
             .and_then(responses_to_df)
             .and_then(transform_dataframe)
-            .and_then(df_to_md);
+            .and_then(|df: polars::prelude::DataFrame| df_to_md(&df));
 
         assert!(&res.is_ok());
         assert_eq!(res.unwrap().lines, expected_result.lines);

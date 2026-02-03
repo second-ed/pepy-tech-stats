@@ -17,13 +17,14 @@ pub struct PepyUrl {
 }
 
 impl PepyUrl {
+    #[must_use]
     pub fn new(project: &str) -> Self {
         Self {
             base_url: BASE_URL.to_string(),
             project: project.to_string(),
         }
     }
-
+    #[must_use]
     pub fn into_url(self) -> String {
         let project_endpoint = format!("{}{}", PROJECT_STATS_ENDPOINT, self.project);
         format!(
@@ -36,7 +37,7 @@ impl PepyUrl {
 
 pub fn process_project_stats(
     adapter: &mut impl Adapter,
-    projects: Vec<String>,
+    projects: &[String],
     requests_per_min: usize,
 ) -> Result<Vec<IoValue>, PepyStatsError> {
     let mut results: Vec<Result<Vec<IoValue>, PepyStatsError>> = Vec::new();
@@ -54,7 +55,7 @@ pub fn process_project_stats(
         }
 
         let batch: Vec<_> = batch.collect();
-        results.push(process_batch_project_stats(adapter, batch));
+        results.push(process_batch_project_stats(adapter, &batch));
     }
     results
         .into_iter()
@@ -62,10 +63,9 @@ pub fn process_project_stats(
         .map(|batches| batches.into_iter().flatten().collect())
 }
 
-#[inline(always)]
 fn process_batch_project_stats(
     adapter: &mut impl Adapter,
-    projects: Vec<&String>,
+    projects: &[&String],
 ) -> Result<Vec<IoValue>, PepyStatsError> {
     let results: Result<Vec<IoValue>, PepyStatsError> = projects
         .iter()
