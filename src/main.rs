@@ -17,6 +17,7 @@ fn main() {
         "danom",
         "headline",
         "io-adapters",
+        "papertrail",
         "readme-update",
         "repo-mapper",
         "repo-mapper-rs",
