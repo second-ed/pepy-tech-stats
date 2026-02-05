@@ -1,9 +1,9 @@
 # pepy-tech-stats
 
 ## python packages
-total downloads: `45210`
+total downloads: `45414`
 
-yesterday downloads: `210`
+yesterday downloads: `243`
 
 ### breakdown by package
 | package | total_downloads | yesterday_downloads |
@@ -16,6 +16,7 @@ yesterday downloads: `210`
 | spaghettree | 1775 | 9 |
 | io-adapters | 1109 | 35 |
 | repo-mapper | 1034 | 0 |
+| papertrail | 204 | 33 |
 ::
 
 
