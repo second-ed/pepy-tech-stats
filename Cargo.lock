@@ -1599,7 +1599,6 @@ dependencies = [
  "polars",
  "regex",
  "reqwest",
- "serde",
  "serde_json",
  "test-case",
  "thiserror",
