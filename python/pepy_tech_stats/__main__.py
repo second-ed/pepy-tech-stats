@@ -74,7 +74,7 @@ def responses_to_jsons(responses: list[httpx.Response]) -> tuple[dict[str, Any]]
 
     if failed_gets:
         raise RuntimeError(f"Failed to get stats for {failed_gets = }")
-    return oks.tap(lambda x: logger.info(f"{x.request = } {x.status_code = }")).map(lambda x: x.json()).collect()
+    return oks.tap(lambda x: logger.info(f"{x.status_code} | {x.request}")).map(lambda x: x.json()).collect()
 
 
 @safe
