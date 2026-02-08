@@ -1,16 +1,19 @@
+from __future__ import annotations
+
 import argparse
+import asyncio
 import datetime as dt
 import itertools
 import re
 import time
-from functools import partial
 from itertools import batched
 from pathlib import Path
+from typing import Any
 
 import attrs
+import httpx
 import polars as pl
-import requests
-from danom import Stream, safe
+from danom import Result, Stream, safe
 
 from pepy_tech_stats.core.constants import (
     BASE,
@@ -20,84 +23,58 @@ from pepy_tech_stats.core.constants import (
 from pepy_tech_stats.core.logger import logger
 
 
-def main(projects: list[str], api_key: str) -> None:
+async def main(client: AsyncPepyStatsClient, projects: list[str]) -> None:
     res = (
-        process_project_stats(
-            projects=projects,
-            context=Context(
-                base=BASE,
-                project_endpoint=PROJECT_STATS_ENDPOINT,
-                api_key=api_key,
-            ),
-        )
+        Result.unit(await process_project_stats(client, projects))
+        .and_then(responses_to_jsons)
         .and_then(create_readme_table)
         .and_then(update_readme)
     )
+
     if not res.is_ok():
         raise res.error
 
 
-@attrs.define(frozen=True)
-class Context:
-    base: str
-    project_endpoint: str
-    api_key: str
+@attrs.define
+class AsyncPepyStatsClient:
+    api_key: str = attrs.field(repr=False)
+    base: str = attrs.field(default=BASE)
+    project_endpoint: str = attrs.field(default=PROJECT_STATS_ENDPOINT)
+    client: httpx.AsyncClient = attrs.field(init=False)
+
+    def __attrs_post_init__(self) -> None:
+        self.client = httpx.AsyncClient(headers={"X-API-Key": self.api_key})
+
+    async def get_batch_project_stats(self, projects: list[str]) -> list[httpx.Response]:
+        requests = [
+            self.client.get(url=f"{self.base}{self.project_endpoint.format(project=project)}") for project in projects
+        ]
+        return await asyncio.gather(*requests)
 
 
-@safe
-def process_project_stats(
-    projects: list[str], context: Context, requests_per_min: int = REQUESTS_PER_MIN
+async def process_project_stats(
+    client: AsyncPepyStatsClient, projects: list[str], requests_per_min: int = REQUESTS_PER_MIN
 ) -> itertools.chain:
     batches, results = batched(projects, requests_per_min), []
 
     for idx, batch in enumerate(batches):
         if idx > 0:
             # only want to sleep after we've exceeded the max requests for the first time
-            time.sleep(60)
-        results.append(process_batch_project_stats(batch, context))
+            # use blocking time.sleep to avoid rate limit
+            time.sleep(60)  # noqa: ASYNC251
+        results.append(await client.get_batch_project_stats(batch))
 
     return itertools.chain.from_iterable(results)
 
 
-def process_batch_project_stats(
-    projects: list[str],
-    context: Context,
-) -> tuple[dict[str, str], ...]:
-    successes, fails = (
-        Stream.from_iterable(projects)
-        .map(
-            partial(
-                get_project_stats,
-                base=context.base,
-                project_endpoint=context.project_endpoint,
-                api_key=context.api_key,
-            )
-        )
-        .partition(lambda x: x.ok)
-    )
+@safe
+def responses_to_jsons(responses: list[httpx.Response]) -> tuple[dict[str, Any]]:
+    oks, errs = Stream.from_iterable(responses).partition(lambda x: x.is_success)
+    failed_gets = errs.tap(lambda x: logger.error(vars(x))).collect()
 
-    failed_gets = fails.tap(lambda x: logger.error(vars(x))).collect()
     if failed_gets:
         raise RuntimeError(f"Failed to get stats for {failed_gets = }")
-    return successes.map(lambda x: x.json()).collect()
-
-
-def get_project_stats(
-    project: str,
-    base: str,
-    project_endpoint: str,
-    api_key: str,
-) -> requests.Response:
-    logger.info(f"requesting {project = }")
-    res = requests.get(
-        url=f"{base}{project_endpoint.format(project=project)}",
-        headers={"X-API-Key": api_key},
-        timeout=10,
-    )
-    logger.info(
-        f"{res.request = } | {res.url = } | {res.status_code = } | {res.reason = } | {res.text[:200] = }"
-    )
-    return res
+    return oks.tap(lambda x: logger.info(f"{x.request = } {x.status_code = }")).map(lambda x: x.json()).collect()
 
 
 @safe
@@ -109,9 +86,7 @@ def create_readme_table(project_stats: tuple[dict[str, str], ...]) -> str:
         .lazy()
         .rename({"id": "package"})
         .unnest("downloads")
-        .with_columns(
-            [pl.sum_horizontal(pl.col(yesterday).struct.field("*")).alias("yesterday_downloads")]
-        )
+        .with_columns([pl.sum_horizontal(pl.col(yesterday).struct.field("*")).alias("yesterday_downloads")])
         .select("package", "total_downloads", "yesterday_downloads")
         .sort("total_downloads", descending=True)
         .collect()
@@ -153,14 +128,16 @@ if __name__ == "__main__":
     parser.add_argument("--api-key", type=str)
     args = parser.parse_args()
 
+    client = AsyncPepyStatsClient(args.api_key)
     projects = [
         "class-inspector",
         "danom",
         "headline",
         "io-adapters",
+        "papertrail",
         "readme-update",
         "repo-mapper",
         "repo-mapper-rs",
         "spaghettree",
     ]
-    main(projects, api_key=args.api_key)
+    asyncio.run(main(client, projects))

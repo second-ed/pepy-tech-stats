@@ -8,9 +8,7 @@ logger = logging.getLogger(__name__)
 logger.propagate = False
 
 
-formatter = logging.Formatter(
-    "%(asctime)s | %(levelname)-8s [%(filename)s:%(lineno)d:%(funcName)s] %(message)s"
-)
+formatter = logging.Formatter("%(asctime)s | %(levelname)-8s [%(filename)s:%(lineno)d:%(funcName)s] %(message)s")
 logger.setLevel(logging.DEBUG)
 stream_handler = logging.StreamHandler()
 stream_handler.setLevel(logging.INFO)
