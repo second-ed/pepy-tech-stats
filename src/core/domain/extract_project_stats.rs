@@ -49,7 +49,7 @@ pub fn process_project_stats(
         .enumerate()
     {
         if idx > 0 {
-            log::info!("Sleeping for batch {:?}", &idx);
+            log::info!("Sleeping for batch {idx:?}");
             // only sleep after we've exceeded the max requests once
             thread::sleep(SleepDuration::from_mins(1));
         }

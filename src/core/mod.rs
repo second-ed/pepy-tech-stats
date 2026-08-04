@@ -54,7 +54,7 @@ pub fn configure_logger(
                 record.level(),
                 record.module_path().unwrap_or("unknown"),
                 record.line().unwrap_or(0),
-                &record.args()
+                record.args()
             )
         })
         .duplicate_to_stdout(Duplicate::All)

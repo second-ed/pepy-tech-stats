@@ -70,7 +70,7 @@ pub fn get_request(url: &Path, extras: &Extras) -> std::result::Result<IoValue, 
         Ok(headers)
     }
 
-    log::info!("Sending request to: {:?}", &url.display());
+    log::info!("Sending request to: {:?}", url.display());
 
     let client = Client::new();
     let headers = extras_to_headers(extras)?;
@@ -79,7 +79,7 @@ pub fn get_request(url: &Path, extras: &Extras) -> std::result::Result<IoValue, 
         .headers(headers)
         .send()?;
 
-    log::info!("{:?} | {:?}", &res.url().as_str(), &res.status());
+    log::info!("{:?} | {:?}", res.url().as_str(), res.status());
 
     match res.json() {
         Ok(j) => Ok(IoValue::Json(j)),
