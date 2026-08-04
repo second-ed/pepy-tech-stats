@@ -20,8 +20,6 @@ pub enum PepyStatsError {
     ReqwestError(#[from] reqwest::Error),
     #[error("external error: {0}")]
     External(#[from] Box<dyn std::error::Error>),
-    #[error("PolarsError: {0}")]
-    Polars(#[from] polars::prelude::PolarsError),
     #[error("RegexError: {0}")]
     RegexError(#[from] regex::Error),
 }

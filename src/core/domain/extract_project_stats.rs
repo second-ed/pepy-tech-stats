@@ -51,7 +51,7 @@ pub fn process_project_stats(
         if idx > 0 {
             log::info!("Sleeping for batch {:?}", &idx);
             // only sleep after we've exceeded the max requests once
-            thread::sleep(SleepDuration::from_secs(60));
+            thread::sleep(SleepDuration::from_mins(1));
         }
 
         let batch: Vec<_> = batch.collect();
