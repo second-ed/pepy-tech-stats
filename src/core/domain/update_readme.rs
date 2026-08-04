@@ -1,7 +1,6 @@
 use crate::core::{
     adapters::{Adapter, FileType, IoValue},
-    domain::errors::PepyStatsError,
-    ReadMeTable,
+    domain::{errors::PepyStatsError, transform::ReadMeTable},
 };
 use regex::Regex;
 use std::path::PathBuf;
@@ -9,7 +8,7 @@ use std::path::PathBuf;
 #[derive(Debug, Eq, PartialEq)]
 pub struct ReadMe(String);
 
-pub fn update_readme(
+pub(crate) fn update_readme(
     adapter: &mut impl Adapter,
     readme_table: ReadMeTable,
     readme_path: &str,
