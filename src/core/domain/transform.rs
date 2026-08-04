@@ -84,7 +84,7 @@ impl PackageStats {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub(crate) struct ReadMeTable {
     lines: Vec<String>,
 }
@@ -98,5 +98,43 @@ impl ReadMeTable {
     #[must_use]
     pub fn into_string(self) -> String {
         self.lines.join("\n")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::core::domain::transform::{
+        package_stats_to_readme_table, PackageStats, ReadMeTable,
+    };
+    use test_case::test_case;
+
+    fn given_a_vec_of_package_stats_when_called_then_return_valid_readme_table(
+    ) -> (Vec<PackageStats>, ReadMeTable) {
+        let package_stats = vec![
+            PackageStats::new("a".to_string(), 100, 50),
+            PackageStats::new("b".to_string(), 200, 10),
+        ];
+        let expected_res = ReadMeTable::new(
+            vec![
+                "total downloads: `300`\n",
+                "yesterday downloads: `60`\n",
+                "### breakdown by package",
+                "| package | total_downloads | yesterday_downloads |",
+                "| --- | --- | --- |",
+                "| b | 200 | 10 |",
+                "| a | 100 | 50 |",
+            ]
+            .into_iter()
+            .map(str::to_string)
+            .collect(),
+        );
+        (package_stats, expected_res)
+    }
+
+    #[test_case(given_a_vec_of_package_stats_when_called_then_return_valid_readme_table())]
+    fn test_package_stats_to_readme_table(args: (Vec<PackageStats>, ReadMeTable)) {
+        let (input_data, expected_result) = args;
+        let res = package_stats_to_readme_table(input_data);
+        assert_eq!(res, expected_result);
     }
 }
