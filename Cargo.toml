@@ -21,7 +21,6 @@ log = "0.4.29"
 regex = "1.12.2"
 reqwest = {version = "0.12.24", features = ["blocking", "json"]}
 serde_json = "1.0.145"
-test-case = "3.3.1"
 thiserror = "2.0.17"
 
 
@@ -39,3 +38,6 @@ complexity = { level = "deny", priority = -1 }
 perf = { level = "deny", priority = -1 }
 correctness = { level = "deny", priority = -1 }
 missing_errors_doc = "allow"
+
+[dev-dependencies]
+test-case = "3.3.1"

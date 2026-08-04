@@ -1,5 +1,10 @@
+use std::path::Path;
+
 use clap::Parser;
-use pepy_tech_stats::core::{adapters::get_real_adapter, run};
+use pepy_tech_stats::core::{
+    adapters::{get_real_adapter, Adapter, FileType, IoValue},
+    run,
+};
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -12,18 +17,15 @@ struct Args {
 fn main() {
     let args = Args::parse();
     let mut adapter = get_real_adapter();
-    let projects = vec![
-        "class-inspector",
-        "danom",
-        "headline",
-        "io-adapters",
-        "papertrail",
-        "readme-update",
-        "repo-mapper",
-        "repo-mapper-rs",
-        "spaghettree",
-    ]
-    .into_iter()
+
+    let projects = match adapter.read(Path::new("./config/projects.txt"), FileType::Str) {
+        Ok(IoValue::Str(value)) => Some(value),
+        Ok(IoValue::Json(_)) => unreachable!(),
+        Err(_) => None,
+    }
+    .unwrap_or_default()
+    .trim()
+    .lines()
     .map(str::to_string)
     .collect::<Vec<String>>();
 
