@@ -21,7 +21,7 @@ jobs:
         id: rust-binary
         uses: actions/cache@v6
         with:
-          path: target/ci/pepy-tech-stats
+          path: target/release/pepy-tech-stats
           key: ${{ runner.os }}-rust-binary-${{ hashFiles('Cargo.toml', 'Cargo.lock', 'src/**/*.rs') }}
 
       - name: Build Rust binary
