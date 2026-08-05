@@ -1,4 +1,5 @@
 use crate::core::adapters::IoValue;
+use chrono::{Duration, Utc};
 use serde_json::Value;
 
 pub(crate) fn parse_package_stats(values: &[IoValue], yesterday: &String) -> Vec<PackageStats> {
@@ -35,6 +36,12 @@ pub(crate) fn package_stats_to_readme_table(mut package_stats: Vec<PackageStats>
 
     lines.extend(package_stats.iter().map(PackageStats::table_line));
     ReadMeTable::new(lines)
+}
+
+pub(crate) fn yesterday() -> String {
+    (Utc::now().date_naive() - Duration::days(1))
+        .format("%Y-%m-%d")
+        .to_string()
 }
 
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
@@ -103,10 +110,68 @@ impl ReadMeTable {
 
 #[cfg(test)]
 mod tests {
-    use crate::core::domain::transform::{
-        package_stats_to_readme_table, PackageStats, ReadMeTable,
+    use crate::core::{
+        adapters::IoValue,
+        domain::transform::{
+            package_stats_to_readme_table, parse_package_stats, yesterday, PackageStats,
+            ReadMeTable,
+        },
     };
+    use serde_json::json;
     use test_case::test_case;
+
+    fn given_a_vec_of_io_values_when_called_with_yesterday_then_return_vec_of_package_stats(
+    ) -> (Vec<IoValue>, String, Vec<PackageStats>) {
+        let yesterday = yesterday();
+        let values = vec![
+            IoValue::Json(json!({
+                "id": "some-package",
+                "total_downloads": 100,
+                "versions": ["0.1.0", "0.2.0"],
+                "downloads": {
+                    yesterday.clone(): {
+                        "0.1.0": 30,
+                        "0.2.0": 30
+                    },
+                    "2026-01-01": {
+                        "0.1.0": 5,
+                        "0.2.0": 20
+                    },
+                },
+            })),
+            IoValue::Json(json!({
+                "id": "some-other-package",
+                "total_downloads": 200,
+                "versions": ["0.1.0", "0.2.0"],
+                "downloads": {
+                    yesterday.clone(): {
+                        "0.1.0": 10,
+                        "0.2.0": 10
+                    },
+                    "2026-01-01": {
+                        "0.1.0": 5,
+                        "0.2.0": 20
+                    },
+                },
+            })),
+        ];
+
+        let expected_result = vec![
+            PackageStats::new("some-package".to_string(), 100, 60),
+            PackageStats::new("some-other-package".to_string(), 200, 20),
+        ];
+
+        (values, yesterday, expected_result)
+    }
+
+    #[test_case(
+        given_a_vec_of_io_values_when_called_with_yesterday_then_return_vec_of_package_stats()
+    )]
+    fn test_parse_package_stats(args: (Vec<IoValue>, String, Vec<PackageStats>)) {
+        let (values, yesterday, expected_result) = args;
+        let res = parse_package_stats(&values, &yesterday);
+        assert_eq!(res, expected_result);
+    }
 
     fn given_a_vec_of_package_stats_when_called_then_return_valid_readme_table(
     ) -> (Vec<PackageStats>, ReadMeTable) {

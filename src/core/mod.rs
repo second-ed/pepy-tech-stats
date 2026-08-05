@@ -6,11 +6,10 @@ use crate::core::{
     domain::{
         errors::PepyStatsError,
         extract_project_stats::{process_project_stats, REQUESTS_PER_MIN},
-        transform::{package_stats_to_readme_table, parse_package_stats},
+        transform::{package_stats_to_readme_table, parse_package_stats, yesterday},
         update_readme::update_readme,
     },
 };
-use chrono::{Duration, Utc};
 use flexi_logger::{Cleanup, Criterion, DeferredNow, Duplicate, FileSpec, Logger, Naming};
 use log;
 use std::io::Write;
@@ -30,10 +29,7 @@ pub fn run(
     adapter.add_param(ParamKey::ApiKey, ParamValue::Str(api_key));
 
     let readme_path = "./README.md";
-
-    let yesterday = (Utc::now().date_naive() - Duration::days(1))
-        .format("%Y-%m-%d")
-        .to_string();
+    let yesterday = yesterday();
 
     let _ = process_project_stats(adapter, projects, REQUESTS_PER_MIN)
         .map(|values| parse_package_stats(&values, &yesterday))
