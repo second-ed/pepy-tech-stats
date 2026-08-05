@@ -1,58 +1,98 @@
-use crate::core::{adapters::IoValue, domain::errors::PepyStatsError};
+use crate::core::adapters::IoValue;
 use chrono::{Duration, Utc};
-use log;
-use polars::{
-    lazy::dsl::sum_horizontal,
-    prelude::{col, DataFrame, SortMultipleOptions, *},
-};
+use serde_json::Value;
 
-pub fn responses_to_df(values: Vec<IoValue>) -> Result<DataFrame, PepyStatsError> {
-    let json_rows: Vec<serde_json::Value> = values
-        .into_iter()
-        .map(|v| match v {
+pub(crate) fn parse_package_stats(values: &[IoValue], yesterday: &String) -> Vec<PackageStats> {
+    values
+        .iter()
+        .map(|value| match value {
             IoValue::Json(j) => j,
             IoValue::Str(_) => unreachable!(),
         })
-        .collect();
-    Ok(JsonReader::new(std::io::Cursor::new(serde_json::to_vec(&json_rows)?)).finish()?)
+        .map(|value| PackageStats::from_request(value, yesterday))
+        .collect::<Vec<PackageStats>>()
 }
 
-pub fn transform_dataframe(df: DataFrame) -> Result<DataFrame, PepyStatsError> {
-    let yesterday = (Utc::now().date_naive() - Duration::days(1)).to_string();
-    log::info!("yesterday: {yesterday:?}");
+pub(crate) fn package_stats_to_readme_table(mut package_stats: Vec<PackageStats>) -> ReadMeTable {
+    package_stats.sort_by_key(|p| -p.total_downloads);
 
-    let lf = df
-        .lazy()
-        .rename(vec!["id".to_string()], vec!["package".to_string()], true)
-        .unnest(Selector::ByName {
-            names: ["downloads".into()].into(),
-            strict: true,
-        })
-        .with_column(
-            sum_horizontal(vec![col(yesterday).struct_().field_by_name("*")], true)?
-                .alias("yesterday_downloads"),
+    let total_downloads: i64 = package_stats
+        .iter()
+        .map(|package| package.total_downloads)
+        .sum();
+
+    let yesterday_downloads: i64 = package_stats
+        .iter()
+        .map(|package| package.yesterday_downloads)
+        .sum();
+
+    let mut lines = vec![
+        format!("total downloads: `{}`\n", total_downloads),
+        format!("yesterday downloads: `{}`\n", yesterday_downloads),
+        "### breakdown by package".to_string(),
+        "| package | total_downloads | yesterday_downloads |".to_string(),
+        "| --- | --- | --- |".to_string(),
+    ];
+
+    lines.extend(package_stats.iter().map(PackageStats::table_line));
+    ReadMeTable::new(lines)
+}
+
+pub(crate) fn yesterday() -> String {
+    (Utc::now().date_naive() - Duration::days(1))
+        .format("%Y-%m-%d")
+        .to_string()
+}
+
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
+pub(crate) struct PackageStats {
+    package: String,
+    total_downloads: i64,
+    yesterday_downloads: i64,
+}
+
+impl PackageStats {
+    fn new(package: String, total_downloads: i64, yesterday_downloads: i64) -> Self {
+        Self {
+            package,
+            total_downloads,
+            yesterday_downloads,
+        }
+    }
+
+    fn from_request(response: &serde_json::Value, yesterday: &String) -> Self {
+        Self::new(
+            response
+                .get("id")
+                .and_then(|name| name.as_str())
+                .unwrap_or_default()
+                .to_string(),
+            response
+                .get("total_downloads")
+                .unwrap_or_default()
+                .as_i64()
+                .unwrap_or_default(),
+            response
+                .get("downloads")
+                .unwrap_or_default()
+                .get(yesterday)
+                .unwrap_or_default()
+                .as_object()
+                .map(|versions| versions.values().filter_map(Value::as_i64).sum())
+                .unwrap_or_default(),
         )
-        .select([
-            col("package"),
-            col("total_downloads"),
-            col("yesterday_downloads"),
-        ])
-        .sort(
-            ["total_downloads".to_string()],
-            SortMultipleOptions::default()
-                .with_maintain_order(true)
-                .with_multithreaded(true)
-                .with_order_descending(true),
-        );
+    }
 
-    // collect lazy frame into DataFrame
-    let df: DataFrame = lf.collect()?;
-
-    Ok(df)
+    fn table_line(&self) -> String {
+        format!(
+            "| {} | {} | {} |",
+            self.package, self.total_downloads, self.yesterday_downloads
+        )
+    }
 }
 
-#[derive(Debug)]
-pub struct ReadMeTable {
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) struct ReadMeTable {
     lines: Vec<String>,
 }
 
@@ -68,50 +108,22 @@ impl ReadMeTable {
     }
 }
 
-pub fn df_to_md(df: &DataFrame) -> Result<ReadMeTable, PepyStatsError> {
-    let packages = df.column("package")?.str()?;
-    let totals = df.column("total_downloads")?.i64()?;
-    let yesterday = df.column("yesterday_downloads")?.i64()?;
-
-    let mut lines = vec![
-        format!(
-            "total downloads: `{}`\n",
-            df.column("total_downloads")?.i64()?.sum().unwrap_or(0),
-        ),
-        format!(
-            "yesterday downloads: `{}`\n",
-            df.column("yesterday_downloads")?.i64()?.sum().unwrap_or(0),
-        ),
-        "### breakdown by package".to_string(),
-        "| package | total_downloads | yesterday_downloads |".to_string(),
-        "| --- | --- | --- |".to_string(),
-    ];
-
-    for i in 0..df.height() {
-        lines.push(format!(
-            "| {} | {} | {} |",
-            packages.get(i).unwrap_or(""),
-            totals.get(i).unwrap_or(0),
-            yesterday.get(i).unwrap_or(0)
-        ));
-    }
-
-    Ok(ReadMeTable::new(lines))
-}
-
 #[cfg(test)]
 mod tests {
     use crate::core::{
         adapters::IoValue,
-        domain::transform::{df_to_md, responses_to_df, transform_dataframe, ReadMeTable},
+        domain::transform::{
+            package_stats_to_readme_table, parse_package_stats, yesterday, PackageStats,
+            ReadMeTable,
+        },
     };
-    use chrono::{Duration, Utc};
     use serde_json::json;
     use test_case::test_case;
 
-    fn mock_responses() -> Vec<IoValue> {
-        let yesterday = (Utc::now().date_naive() - Duration::days(1)).to_string();
-        vec![
+    fn given_a_vec_of_io_values_when_called_with_yesterday_then_return_vec_of_package_stats(
+    ) -> (Vec<IoValue>, String, Vec<PackageStats>) {
+        let yesterday = yesterday();
+        let values = vec![
             IoValue::Json(json!({
                 "id": "some-package",
                 "total_downloads": 100,
@@ -142,34 +154,52 @@ mod tests {
                     },
                 },
             })),
-        ]
+        ];
+
+        let expected_result = vec![
+            PackageStats::new("some-package".to_string(), 100, 60),
+            PackageStats::new("some-other-package".to_string(), 200, 20),
+        ];
+
+        (values, yesterday, expected_result)
     }
 
-    fn mock_responses_md_table() -> ReadMeTable {
-        ReadMeTable::new(
+    #[test_case(
+        given_a_vec_of_io_values_when_called_with_yesterday_then_return_vec_of_package_stats()
+    )]
+    fn test_parse_package_stats(args: (Vec<IoValue>, String, Vec<PackageStats>)) {
+        let (values, yesterday, expected_result) = args;
+        let res = parse_package_stats(&values, &yesterday);
+        assert_eq!(res, expected_result);
+    }
+
+    fn given_a_vec_of_package_stats_when_called_then_return_valid_readme_table(
+    ) -> (Vec<PackageStats>, ReadMeTable) {
+        let package_stats = vec![
+            PackageStats::new("a".to_string(), 100, 50),
+            PackageStats::new("b".to_string(), 200, 10),
+        ];
+        let expected_res = ReadMeTable::new(
             vec![
                 "total downloads: `300`\n",
-                "yesterday downloads: `80`\n",
+                "yesterday downloads: `60`\n",
                 "### breakdown by package",
                 "| package | total_downloads | yesterday_downloads |",
                 "| --- | --- | --- |",
-                "| some-other-package | 200 | 20 |",
-                "| some-package | 100 | 60 |",
+                "| b | 200 | 10 |",
+                "| a | 100 | 50 |",
             ]
             .into_iter()
-            .map(String::from)
+            .map(str::to_string)
             .collect(),
-        )
+        );
+        (package_stats, expected_res)
     }
 
-    #[test_case(mock_responses(), &mock_responses_md_table())]
-    fn test_responses_to_transformed_df(input_data: Vec<IoValue>, expected_result: &ReadMeTable) {
-        let res = Ok(input_data)
-            .and_then(responses_to_df)
-            .and_then(transform_dataframe)
-            .and_then(|df: polars::prelude::DataFrame| df_to_md(&df));
-
-        assert!(&res.is_ok());
-        assert_eq!(res.unwrap().lines, expected_result.lines);
+    #[test_case(given_a_vec_of_package_stats_when_called_then_return_valid_readme_table())]
+    fn test_package_stats_to_readme_table(args: (Vec<PackageStats>, ReadMeTable)) {
+        let (input_data, expected_result) = args;
+        let res = package_stats_to_readme_table(input_data);
+        assert_eq!(res, expected_result);
     }
 }

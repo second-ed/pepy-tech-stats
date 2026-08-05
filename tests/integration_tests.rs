@@ -1,10 +1,13 @@
 use chrono::{Duration, Utc};
 use pepy_tech_stats::core::{
-    adapters::{get_fake_adapter, Adapter, FakeFileMap, FileType, IoValue},
+    adapters::{
+        get_fake_adapter, Adapter, FakeFileMap, FakeRequestAdapter, FakeResponseMap, FileType,
+        IoValue,
+    },
     run,
 };
 use serde_json::json;
-use std::{collections::HashMap, path::PathBuf};
+use std::path::PathBuf;
 use test_case::test_case;
 
 fn get_api_response(
@@ -31,8 +34,20 @@ fn get_api_response(
     }))
 }
 
-fn case_1_files() -> FakeFileMap {
-    vec![
+fn case_1_files() -> (FakeFileMap, FakeResponseMap) {
+    let fake_files = vec![
+        (
+            "./README.md",
+            IoValue::Str(
+                "## python packages\ntotal downloads: `15`\n\nyesterday downloads: `15`\n\n### breakdown by package\n| package | total_downloads | yesterday_downloads |\n| --- | --- | --- |\n| a | 10 | 10 |\n| b | 5 | 5 |\n\n::".to_string()
+            ),
+        ),
+    ]
+    .into_iter()
+    .map(|(k, v)| (PathBuf::from(k), v))
+    .collect::<FakeFileMap>();
+
+    let fake_responses = vec![
         (
             "https://api.pepy.tech/api/v2/projects/a",
             get_api_response("a", 200, 10, 5),
@@ -45,16 +60,12 @@ fn case_1_files() -> FakeFileMap {
             "https://api.pepy.tech/api/v2/projects/c",
             get_api_response("c", 100, 50, 0),
         ),
-        (
-            "./README.md",
-            IoValue::Str(
-                "## python packages\ntotal downloads: `15`\n\nyesterday downloads: `15`\n\n### breakdown by package\n| package | total_downloads | yesterday_downloads |\n| --- | --- | --- |\n| a | 10 | 10 |\n| b | 5 | 5 |\n\n::".to_string()
-            ),
-        ),
     ]
     .into_iter()
-    .map(|(k, v)| (PathBuf::from(k), v))
-    .collect::<HashMap<PathBuf, IoValue>>()
+    .map(|(k, v)| (k.to_string(), v))
+    .collect::<FakeResponseMap>();
+
+    (fake_files, fake_responses)
 }
 
 struct TestCase {
@@ -75,11 +86,14 @@ fn case_1() -> TestCase {
     TestCase::new(vec!["a"], "## python packages\ntotal downloads: `200`\n\nyesterday downloads: `15`\n\n### breakdown by package\n| package | total_downloads | yesterday_downloads |\n| --- | --- | --- |\n| a | 200 | 15 |\n::")
 }
 
+#[tokio::test]
 #[test_case(case_1_files(), &case_1())]
-fn test_run(files: HashMap<PathBuf, IoValue>, case: &TestCase) {
+async fn test_run(input_data: (FakeFileMap, FakeResponseMap), case: &TestCase) {
+    let (files, responses) = input_data;
     let mut adapter = get_fake_adapter(files);
+    let client = FakeRequestAdapter::new(responses);
 
-    let _res = run(&mut adapter, &case.projects, "abc-123".to_string());
+    let _res = run(&mut adapter, &client, &case.projects, "abc-123".to_string()).await;
     let readme = adapter.read(&PathBuf::from("./README.md"), FileType::Str);
 
     assert!(readme.is_ok());

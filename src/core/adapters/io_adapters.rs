@@ -1,8 +1,5 @@
 use crate::core::{
-    adapters::{
-        io_funcs::{FileType, IoValue, ReadFn, WriteFn},
-        io_params::{ParamKey, ParamValue},
-    },
+    adapters::io_funcs::{FileType, IoValue, ReadFn, WriteFn},
     domain::errors::PepyStatsError,
 };
 use log;
@@ -27,13 +24,11 @@ pub trait Adapter {
         data: IoValue,
         file_type: FileType,
     ) -> std::result::Result<(), PepyStatsError>;
-    fn add_param(&mut self, key: ParamKey, value: ParamValue) -> &mut Self;
 }
 
 pub struct RealAdapter {
     pub read_fns: ReadMap,
     pub write_fns: WriteMap,
-    pub params: HashMap<ParamKey, ParamValue>,
 }
 
 impl RealAdapter {
@@ -41,7 +36,6 @@ impl RealAdapter {
         Self {
             read_fns,
             write_fns,
-            params: HashMap::new(),
         }
     }
 }
@@ -57,7 +51,7 @@ impl Adapter for RealAdapter {
             .get(&file_type)
             .ok_or(PepyStatsError::UnknownFileType(file_type))?;
         log::info!("reading: {}", path.display());
-        func(path, &self.params)
+        func(path)
     }
 
     fn write(
@@ -70,11 +64,7 @@ impl Adapter for RealAdapter {
             .write_fns
             .get(&file_type)
             .ok_or(PepyStatsError::UnknownFileType(file_type))?;
-        func(path, data, &self.params)
-    }
-    fn add_param(&mut self, key: ParamKey, value: ParamValue) -> &mut Self {
-        self.params.insert(key, value);
-        self
+        func(path, data)
     }
 }
 #[allow(unused)]
@@ -82,7 +72,6 @@ pub struct FakeAdapter {
     pub read_fns: ReadMap,
     pub write_fns: WriteMap,
     pub files: FakeFileMap,
-    pub params: HashMap<ParamKey, ParamValue>,
 }
 
 impl FakeAdapter {
@@ -91,7 +80,6 @@ impl FakeAdapter {
             read_fns,
             write_fns,
             files,
-            params: HashMap::new(),
         }
     }
 }
@@ -105,7 +93,7 @@ impl Adapter for FakeAdapter {
 
         let val = match file_type {
             FileType::Str => IoValue::Str(res.to_string()?),
-            FileType::Json | FileType::ApiCall => res.to_owned(),
+            FileType::Json => res.to_owned(),
         };
         Ok(val)
     }
@@ -117,9 +105,5 @@ impl Adapter for FakeAdapter {
     ) -> std::result::Result<(), PepyStatsError> {
         self.files.insert(path.to_path_buf(), data);
         Ok(())
-    }
-    fn add_param(&mut self, key: ParamKey, value: ParamValue) -> &mut Self {
-        self.params.insert(key, value);
-        self
     }
 }

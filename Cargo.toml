@@ -16,14 +16,13 @@ path = "src/main.rs"
 chrono = "0.4.42"
 clap = { version = "4.5.54", features = ["derive"] }
 flexi_logger = "0.31.7"
-itertools = "0.14.0"
+futures = "0.3"
 log = "0.4.29"
-polars = { version = "0.51.0", features = ["lazy", "temporal", "dtype-date", "dtype-datetime", "json"] }
 regex = "1.12.2"
-reqwest = {version = "0.12.24", features = ["blocking", "json"]}
+reqwest = {version = "0.12.24", features = ["json"]}
 serde_json = "1.0.145"
-test-case = "3.3.1"
 thiserror = "2.0.17"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }
 
 
 [profile.release]
@@ -40,3 +39,6 @@ complexity = { level = "deny", priority = -1 }
 perf = { level = "deny", priority = -1 }
 correctness = { level = "deny", priority = -1 }
 missing_errors_doc = "allow"
+
+[dev-dependencies]
+test-case = "3.3.1"

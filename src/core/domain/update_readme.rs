@@ -8,7 +8,7 @@ use std::path::PathBuf;
 #[derive(Debug, Eq, PartialEq)]
 pub struct ReadMe(String);
 
-pub fn update_readme(
+pub(crate) fn update_readme(
     adapter: &mut impl Adapter,
     readme_table: ReadMeTable,
     readme_path: &str,
@@ -19,8 +19,7 @@ pub fn update_readme(
 
     let current_readme = ReadMe(adapter.read(&readme_path, FileType::Str)?.to_string()?);
     let updated_readme = parse_readme_table(&current_readme, readme_table)?;
-    log::info!("{current_readme:?}");
-    log::info!("{updated_readme:?}");
+
     if updated_readme != current_readme {
         adapter.write(&readme_path, IoValue::Str(updated_readme.0), FileType::Str)?;
         log::info!("updated readme");

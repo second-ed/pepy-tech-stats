@@ -2,11 +2,11 @@ pub mod adapters;
 pub mod domain;
 
 use crate::core::{
-    adapters::{Adapter, ParamKey, ParamValue},
+    adapters::{Adapter, ApiRequester},
     domain::{
         errors::PepyStatsError,
         extract_project_stats::{process_project_stats, REQUESTS_PER_MIN},
-        transform::{df_to_md, responses_to_df, transform_dataframe},
+        transform::{package_stats_to_readme_table, parse_package_stats, yesterday},
         update_readme::update_readme,
     },
 };
@@ -19,21 +19,22 @@ pub enum RetCode {
     ERR,
 }
 
-pub fn run(
+pub async fn run(
     adapter: &mut impl Adapter,
+    client: &impl ApiRequester,
     projects: &[String],
     api_key: String,
 ) -> Result<RetCode, PepyStatsError> {
     let _ = configure_logger();
     log::info!("Starting process for projects: {projects:?}");
-    adapter.add_param(ParamKey::ApiKey, ParamValue::Str(api_key));
+    let readme_path = "./README.md";
+    let yesterday = yesterday();
 
-    let readme_table = process_project_stats(adapter, projects, REQUESTS_PER_MIN)
-        .and_then(responses_to_df)
-        .and_then(transform_dataframe)
-        .and_then(|df: polars::prelude::DataFrame| df_to_md(&df))?;
-
-    let _ = update_readme(adapter, readme_table, "./README.md");
+    let _ = process_project_stats(client, projects, &api_key, REQUESTS_PER_MIN)
+        .await
+        .map(|values| parse_package_stats(&values, &yesterday))
+        .map(package_stats_to_readme_table)
+        .and_then(|readme_table| update_readme(adapter, readme_table, readme_path));
 
     Ok(RetCode::OK)
 }
@@ -49,7 +50,7 @@ pub fn configure_logger(
                 record.level(),
                 record.module_path().unwrap_or("unknown"),
                 record.line().unwrap_or(0),
-                &record.args()
+                record.args()
             )
         })
         .duplicate_to_stdout(Duplicate::All)
