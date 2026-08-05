@@ -2,7 +2,7 @@ use std::path::Path;
 
 use clap::Parser;
 use pepy_tech_stats::core::{
-    adapters::{get_real_adapter, Adapter, FileType, IoValue},
+    adapters::{get_real_adapter, Adapter, FileType, IoValue, ReqwestAdapter},
     run,
 };
 use reqwest::Client;
@@ -31,7 +31,7 @@ async fn main() {
     .map(str::to_string)
     .collect::<Vec<String>>();
 
-    let client = Client::new();
+    let client = ReqwestAdapter::new(Client::new());
 
     if let Err(err) = run(&mut adapter, &client, &projects, args.api_key).await {
         eprintln!("error: {err}");

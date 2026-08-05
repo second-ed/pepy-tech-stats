@@ -1,7 +1,9 @@
-use crate::core::{adapters::IoValue, domain::errors::PepyStatsError};
+use crate::core::{
+    adapters::{ApiRequester, IoValue},
+    domain::errors::PepyStatsError,
+};
 use futures::future::try_join_all;
 use log;
-use reqwest::Client;
 
 pub const BASE_URL: &str = "https://api.pepy.tech";
 pub const PROJECT_STATS_ENDPOINT: &str = "/api/v2/projects/";
@@ -33,7 +35,7 @@ impl PepyUrl {
 }
 
 pub async fn process_project_stats(
-    client: &Client,
+    client: &impl ApiRequester,
     projects: &[String],
     api_key: &str,
     requests_per_min: usize,
@@ -55,15 +57,7 @@ pub async fn process_project_stats(
             async move {
                 log::info!("Sending request to: {url:?}");
 
-                let response = client
-                    .get(url)
-                    .header("X-API-Key", api_key)
-                    .send()
-                    .await?
-                    .json::<serde_json::Value>()
-                    .await?;
-
-                Ok::<IoValue, PepyStatsError>(IoValue::Json(response))
+                client.get(&url, api_key).await
             }
         });
 

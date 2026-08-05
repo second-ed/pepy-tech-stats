@@ -2,7 +2,7 @@ pub mod adapters;
 pub mod domain;
 
 use crate::core::{
-    adapters::Adapter,
+    adapters::{Adapter, ApiRequester},
     domain::{
         errors::PepyStatsError,
         extract_project_stats::{process_project_stats, REQUESTS_PER_MIN},
@@ -12,7 +12,6 @@ use crate::core::{
 };
 use flexi_logger::{Cleanup, Criterion, DeferredNow, Duplicate, FileSpec, Logger, Naming};
 use log;
-use reqwest::Client;
 use std::io::Write;
 
 pub enum RetCode {
@@ -22,7 +21,7 @@ pub enum RetCode {
 
 pub async fn run(
     adapter: &mut impl Adapter,
-    client: &Client,
+    client: &impl ApiRequester,
     projects: &[String],
     api_key: String,
 ) -> Result<RetCode, PepyStatsError> {
