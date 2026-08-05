@@ -2,7 +2,7 @@ pub mod adapters;
 pub mod domain;
 
 use crate::core::{
-    adapters::{Adapter, ParamKey, ParamValue},
+    adapters::Adapter,
     domain::{
         errors::PepyStatsError,
         extract_project_stats::{process_project_stats, REQUESTS_PER_MIN},
@@ -12,6 +12,7 @@ use crate::core::{
 };
 use flexi_logger::{Cleanup, Criterion, DeferredNow, Duplicate, FileSpec, Logger, Naming};
 use log;
+use reqwest::Client;
 use std::io::Write;
 
 pub enum RetCode {
@@ -19,19 +20,19 @@ pub enum RetCode {
     ERR,
 }
 
-pub fn run(
+pub async fn run(
     adapter: &mut impl Adapter,
+    client: &Client,
     projects: &[String],
     api_key: String,
 ) -> Result<RetCode, PepyStatsError> {
     let _ = configure_logger();
     log::info!("Starting process for projects: {projects:?}");
-    adapter.add_param(ParamKey::ApiKey, ParamValue::Str(api_key));
-
     let readme_path = "./README.md";
     let yesterday = yesterday();
 
-    let _ = process_project_stats(adapter, projects, REQUESTS_PER_MIN)
+    let _ = process_project_stats(client, projects, &api_key, REQUESTS_PER_MIN)
+        .await
         .map(|values| parse_package_stats(&values, &yesterday))
         .map(package_stats_to_readme_table)
         .and_then(|readme_table| update_readme(adapter, readme_table, readme_path));

@@ -1,10 +1,7 @@
-use crate::core::{
-    adapters::{Adapter, FileType, IoValue},
-    domain::errors::PepyStatsError,
-};
-use itertools::Itertools;
+use crate::core::{adapters::IoValue, domain::errors::PepyStatsError};
+use futures::future::try_join_all;
 use log;
-use std::{path::PathBuf, thread, time::Duration as SleepDuration};
+use reqwest::Client;
 
 pub const BASE_URL: &str = "https://api.pepy.tech";
 pub const PROJECT_STATS_ENDPOINT: &str = "/api/v2/projects/";
@@ -35,43 +32,43 @@ impl PepyUrl {
     }
 }
 
-pub fn process_project_stats(
-    adapter: &mut impl Adapter,
+pub async fn process_project_stats(
+    client: &Client,
     projects: &[String],
+    api_key: &str,
     requests_per_min: usize,
 ) -> Result<Vec<IoValue>, PepyStatsError> {
-    let mut results: Vec<Result<Vec<IoValue>, PepyStatsError>> = Vec::new();
+    let mut results: Vec<Vec<IoValue>> = Vec::new();
 
-    for (idx, batch) in projects
-        .iter()
-        .chunks(requests_per_min)
-        .into_iter()
-        .enumerate()
-    {
+    let batches: Vec<_> = projects.chunks(requests_per_min).collect();
+
+    for (idx, batch) in batches.iter().enumerate() {
         if idx > 0 {
             log::info!("Sleeping for batch {idx:?}");
             // only sleep after we've exceeded the max requests once
-            thread::sleep(SleepDuration::from_mins(1));
+            tokio::time::sleep(std::time::Duration::from_mins(1)).await;
         }
 
-        let batch: Vec<_> = batch.collect();
-        results.push(process_batch_project_stats(adapter, &batch));
-    }
-    results
-        .into_iter()
-        .collect::<Result<Vec<Vec<IoValue>>, PepyStatsError>>()
-        .map(|batches| batches.into_iter().flatten().collect())
-}
+        let requests = batch.iter().map(|project| {
+            let url = PepyUrl::new(project).into_url();
 
-fn process_batch_project_stats(
-    adapter: &mut impl Adapter,
-    projects: &[&String],
-) -> Result<Vec<IoValue>, PepyStatsError> {
-    let results: Result<Vec<IoValue>, PepyStatsError> = projects
-        .iter()
-        .map(|project| PepyUrl::new(project).into_url())
-        .map(PathBuf::from)
-        .map(|url| adapter.read(&url, FileType::ApiCall))
-        .collect();
-    results
+            async move {
+                log::info!("Sending request to: {url:?}");
+
+                let response = client
+                    .get(url)
+                    .header("X-API-Key", api_key)
+                    .send()
+                    .await?
+                    .json::<serde_json::Value>()
+                    .await?;
+
+                Ok::<IoValue, PepyStatsError>(IoValue::Json(response))
+            }
+        });
+
+        let batch_results = try_join_all(requests).await?;
+        results.push(batch_results);
+    }
+    Ok(results.into_iter().flatten().collect())
 }

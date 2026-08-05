@@ -5,6 +5,7 @@ use pepy_tech_stats::core::{
     adapters::{get_real_adapter, Adapter, FileType, IoValue},
     run,
 };
+use reqwest::Client;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -14,7 +15,8 @@ struct Args {
     api_key: String,
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let args = Args::parse();
     let mut adapter = get_real_adapter();
 
@@ -29,7 +31,9 @@ fn main() {
     .map(str::to_string)
     .collect::<Vec<String>>();
 
-    if let Err(err) = run(&mut adapter, &projects, args.api_key) {
+    let client = Client::new();
+
+    if let Err(err) = run(&mut adapter, &client, &projects, args.api_key).await {
         eprintln!("error: {err}");
         std::process::exit(1);
     }

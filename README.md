@@ -42,7 +42,6 @@ yesterday downloads: `216`
 │   │   │   ├── io_adapter_builder.rs
 │   │   │   ├── io_adapters.rs
 │   │   │   ├── io_funcs.rs
-│   │   │   ├── io_params.rs
 │   │   │   └── mod.rs
 │   │   ├── domain
 │   │   │   ├── errors.rs
