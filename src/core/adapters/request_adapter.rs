@@ -26,6 +26,7 @@ impl ApiRequester for ReqwestAdapter {
             .header("X-API-Key", api_key)
             .send()
             .await?
+            .error_for_status()?
             .json::<serde_json::Value>()
             .await?;
 

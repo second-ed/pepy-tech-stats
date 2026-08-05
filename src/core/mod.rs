@@ -30,13 +30,15 @@ pub async fn run(
     let readme_path = "./README.md";
     let yesterday = yesterday();
 
-    let _ = process_project_stats(client, projects, &api_key, REQUESTS_PER_MIN)
+    let res = process_project_stats(client, projects, &api_key, REQUESTS_PER_MIN)
         .await
         .map(|values| parse_package_stats(&values, &yesterday))
         .map(package_stats_to_readme_table)
         .and_then(|readme_table| update_readme(adapter, readme_table, readme_path));
-
-    Ok(RetCode::OK)
+    match res {
+        Ok(()) => Ok(RetCode::OK),
+        Err(e) => Err(e),
+    }
 }
 
 pub fn configure_logger(

@@ -22,6 +22,8 @@ pub enum PepyStatsError {
     External(#[from] Box<dyn std::error::Error>),
     #[error("RegexError: {0}")]
     RegexError(#[from] regex::Error),
+    #[error("Must be a positive number greater than 0: {0}")]
+    InvalidRequestsPerMinValue(usize),
 }
 
 impl From<std::io::Error> for PepyStatsError {

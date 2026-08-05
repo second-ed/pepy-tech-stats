@@ -40,6 +40,10 @@ pub async fn process_project_stats(
     api_key: &str,
     requests_per_min: usize,
 ) -> Result<Vec<IoValue>, PepyStatsError> {
+    if requests_per_min == 0 {
+        return Err(PepyStatsError::InvalidRequestsPerMinValue(requests_per_min));
+    }
+
     let mut results: Vec<Vec<IoValue>> = Vec::new();
 
     let batches: Vec<_> = projects.chunks(requests_per_min).collect();
