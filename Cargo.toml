@@ -31,6 +31,8 @@ lto = "fat"
 codegen-units = 1
 panic = "abort"
 strip = true
+incremental = true
+
 
 
 [lints.clippy]
