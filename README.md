@@ -6,17 +6,17 @@ total downloads: `84906`
 yesterday downloads: `151`
 
 ### breakdown by package
-| package         | total_downloads | yesterday_downloads |
-|-----------------|-----------------|---------------------|
-| repo-mapper-rs  | 21974           | 91                  |
-| danom           | 20365           | 6                   |
-| readme-update   | 15419           | 0                   |
-| class-inspector | 10491           | 26                  |
-| io-adapters     | 6402            | 22                  |
-| headline        | 3639            | 0                   |
-| spaghettree     | 2832            | 0                   |
-| papertrail      | 2161            | 6                   |
-| repo-mapper     | 1623            | 0                   |
+| package | total_downloads | yesterday_downloads |
+| --- | --- | --- |
+| repo-mapper-rs | 21974 | 91 |
+| danom | 20365 | 6 |
+| readme-update | 15419 | 0 |
+| class-inspector | 10491 | 26 |
+| io-adapters | 6402 | 22 |
+| headline | 3639 | 0 |
+| spaghettree | 2832 | 0 |
+| papertrail | 2161 | 6 |
+| repo-mapper | 1623 | 0 |
 ::
 
 
