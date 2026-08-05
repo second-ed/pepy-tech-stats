@@ -22,7 +22,16 @@ jobs:
         uses: actions/cache@v6
         with:
           path: target/release/pepy-tech-stats
-          key: ${{ runner.os }}-rust-binary-${{ hashFiles('Cargo.toml', 'Cargo.lock', 'src/**/*.rs') }}
+          key: ${{ runner.os }}-rust-binary-v2-${{ hashFiles('Cargo.toml', 'Cargo.lock', 'src/**/*.rs') }}
+
+      - name: Show cache status
+        run: |
+          echo "Cache hit: ${{ steps.rust-binary.outputs.cache-hit }}"
+          if [ -f target/release/pepy-tech-stats ]; then
+            ls -lh target/release/pepy-tech-stats
+          else
+            echo "Binary not restored"
+          fi
 
       - name: Build Rust binary
         if: steps.rust-binary.outputs.cache-hit != 'true'
