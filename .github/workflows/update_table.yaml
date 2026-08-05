@@ -17,18 +17,15 @@ jobs:
         with:
           ref: main
 
-      - name: Cache Cargo dependencies and build
+      - name: Cache Rust binary
+        id: rust-binary
         uses: actions/cache@v6
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
+          path: target/ci/pepy-tech-stats
+          key: ${{ runner.os }}-rust-binary-${{ hashFiles('Cargo.toml', 'Cargo.lock', 'src/**/*.rs') }}
 
       - name: Build Rust binary
+        if: steps.rust-binary.outputs.cache-hit != 'true'
         run: cargo build --locked --release
 
       - name: Run binary
