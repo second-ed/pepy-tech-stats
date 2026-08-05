@@ -26,9 +26,9 @@ tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }
 
 
 [profile.release]
-opt-level = "s"
-lto = "thin"
-codegen-units = 16
+opt-level = 2
+lto = false
+codegen-units = 256
 panic = "abort"
 strip = true
 incremental = true
