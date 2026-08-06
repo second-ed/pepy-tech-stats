@@ -13,7 +13,10 @@ pub(crate) fn parse_package_stats(values: &[IoValue], yesterday: &String) -> Vec
         .collect::<Vec<PackageStats>>()
 }
 
-pub(crate) fn package_stats_to_readme_table(mut package_stats: Vec<PackageStats>) -> ReadMeTable {
+pub(crate) fn package_stats_to_readme_table(
+    mut package_stats: Vec<PackageStats>,
+    yesterday: &String,
+) -> ReadMeTable {
     package_stats.sort_by_key(|p| -p.total_downloads);
 
     let total_downloads: i64 = package_stats
@@ -29,6 +32,7 @@ pub(crate) fn package_stats_to_readme_table(mut package_stats: Vec<PackageStats>
     let mut lines = vec![
         format!("total downloads: `{}`\n", total_downloads),
         format!("yesterday downloads: `{}`\n", yesterday_downloads),
+        format!("yesterday date: `{}`\n", yesterday),
         "### breakdown by package".to_string(),
         "| package | total_downloads | yesterday_downloads |".to_string(),
         "| --- | --- | --- |".to_string(),
@@ -38,7 +42,8 @@ pub(crate) fn package_stats_to_readme_table(mut package_stats: Vec<PackageStats>
     ReadMeTable::new(lines)
 }
 
-pub(crate) fn yesterday() -> String {
+#[must_use]
+pub fn yesterday() -> String {
     (Utc::now().date_naive() - Duration::days(1))
         .format("%Y-%m-%d")
         .to_string()
@@ -183,6 +188,7 @@ mod tests {
             vec![
                 "total downloads: `300`\n",
                 "yesterday downloads: `60`\n",
+                "yesterday date: `2026-08-06`\n",
                 "### breakdown by package",
                 "| package | total_downloads | yesterday_downloads |",
                 "| --- | --- | --- |",
@@ -199,7 +205,7 @@ mod tests {
     #[test_case(given_a_vec_of_package_stats_when_called_then_return_valid_readme_table())]
     fn test_package_stats_to_readme_table(args: (Vec<PackageStats>, ReadMeTable)) {
         let (input_data, expected_result) = args;
-        let res = package_stats_to_readme_table(input_data);
+        let res = package_stats_to_readme_table(input_data, &"2026-08-06".to_string());
         assert_eq!(res, expected_result);
     }
 }

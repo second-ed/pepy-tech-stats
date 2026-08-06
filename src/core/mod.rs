@@ -33,7 +33,7 @@ pub async fn run(
     let res = process_project_stats(client, projects, &api_key, REQUESTS_PER_MIN)
         .await
         .map(|values| parse_package_stats(&values, &yesterday))
-        .map(package_stats_to_readme_table)
+        .map(|values| package_stats_to_readme_table(values, &yesterday))
         .and_then(|readme_table| update_readme(adapter, readme_table, readme_path));
     match res {
         Ok(()) => Ok(RetCode::OK),
