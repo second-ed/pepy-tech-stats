@@ -1,9 +1,9 @@
-use chrono::{Duration, Utc};
 use pepy_tech_stats::core::{
     adapters::{
         get_fake_adapter, Adapter, FakeFileMap, FakeRequestAdapter, FakeResponseMap, FileType,
         IoValue,
     },
+    domain::transform::yesterday,
     run,
 };
 use serde_json::json;
@@ -16,7 +16,7 @@ fn get_api_response(
     yesterday_v1: u32,
     yesterday_v2: u32,
 ) -> IoValue {
-    let yesterday = (Utc::now().date_naive() - Duration::days(1)).to_string();
+    let yesterday = yesterday();
     IoValue::Json(json!({
         "id": project,
         "total_downloads": total_downloads,
@@ -83,7 +83,7 @@ impl TestCase {
 }
 
 fn case_1() -> TestCase {
-    TestCase::new(vec!["a"], "## python packages\ntotal downloads: `200`\n\nyesterday downloads: `15`\n\n### breakdown by package\n| package | total_downloads | yesterday_downloads |\n| --- | --- | --- |\n| a | 200 | 15 |\n::")
+    TestCase::new(vec!["a"], &format!("## python packages\ntotal downloads: `200`\n\nyesterday downloads: `15`\n\nyesterday date: `{}`\n\n### breakdown by package\n| package | total_downloads | yesterday_downloads |\n| --- | --- | --- |\n| a | 200 | 15 |\n::", yesterday()))
 }
 
 #[tokio::test]
