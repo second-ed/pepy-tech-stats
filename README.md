@@ -5,6 +5,8 @@ total downloads: `85250`
 
 yesterday downloads: `344`
 
+yesterday date: `2026-08-05`
+
 ### breakdown by package
 | package | total_downloads | yesterday_downloads |
 | --- | --- | --- |
