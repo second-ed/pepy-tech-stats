@@ -3,22 +3,22 @@
 ## python packages
 total downloads: `85250`
 
-yesterday downloads: `344`
+yesterday downloads: `0`
 
-yesterday date: `2026-08-05`
+yesterday date: `2026-08-06`
 
 ### breakdown by package
 | package | total_downloads | yesterday_downloads |
 | --- | --- | --- |
-| repo-mapper-rs | 22118 | 144 |
-| danom | 20477 | 112 |
-| readme-update | 15470 | 51 |
-| class-inspector | 10493 | 2 |
-| io-adapters | 6423 | 21 |
-| headline | 3640 | 1 |
-| spaghettree | 2836 | 4 |
-| papertrail | 2167 | 6 |
-| repo-mapper | 1626 | 3 |
+| repo-mapper-rs | 22118 | 0 |
+| danom | 20477 | 0 |
+| readme-update | 15470 | 0 |
+| class-inspector | 10493 | 0 |
+| io-adapters | 6423 | 0 |
+| headline | 3640 | 0 |
+| spaghettree | 2836 | 0 |
+| papertrail | 2167 | 0 |
+| repo-mapper | 1626 | 0 |
 ::
 
 
