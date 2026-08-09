@@ -3,7 +3,7 @@ name: update_readme_table
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 2 * * *'
+    - cron: '0 12 * * *'
 
 jobs:
   update_readme_table:
