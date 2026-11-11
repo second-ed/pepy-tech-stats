@@ -1,23 +1,23 @@
 # pepy-tech-stats
 
 ## python packages
-total downloads: `101703`
+total downloads: `101772`
 
-yesterday downloads: `239`
+yesterday downloads: `69`
 
-yesterday date: `2026-11-09`
+yesterday date: `2026-11-10`
 
 ### breakdown by package
 | package | total_downloads | yesterday_downloads |
 | --- | --- | --- |
-| repo-mapper-rs | 28409 | 132 |
-| danom | 25538 | 82 |
-| readme-update | 17551 | 0 |
-| class-inspector | 11174 | 13 |
-| io-adapters | 7496 | 4 |
-| headline | 3865 | 3 |
-| spaghettree | 3226 | 1 |
-| papertrail | 2648 | 4 |
+| repo-mapper-rs | 28445 | 36 |
+| danom | 25553 | 15 |
+| readme-update | 17555 | 4 |
+| class-inspector | 11174 | 0 |
+| io-adapters | 7497 | 1 |
+| headline | 3867 | 2 |
+| spaghettree | 3235 | 9 |
+| papertrail | 2650 | 2 |
 | repo-mapper | 1796 | 0 |
 ::
 
